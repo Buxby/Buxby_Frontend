@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env (키 값은 올리지 않음)
+.env
+.env.*
+!.env.example

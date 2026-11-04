@@ -1,0 +1,121 @@
+/* 버스비 디자인 토큰 — 피그마 01 Foundations(Variables)와 같은 이름·값 */
+:root {
+  /* Primitives */
+  --white: #ffffff;
+  --black: #191919;
+  --gray-50: #f5f6fa;
+  --gray-100: #eef0f4;
+  --gray-200: #e2e5eb;
+  --gray-300: #c9ced8;
+  --gray-400: #9aa1ae;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+  --blue-50: #eef2ff;
+  --blue-100: #dfe6ff;
+  --blue-300: #a9b9fb;
+  --blue-500: #4a6cf7;
+  --blue-600: #3a57e0;
+  --blue-800: #1e3a8a;
+  --navy-900: #1c2340;
+  --navy-700: #2e3760;
+  --red-50: #fdecec;
+  --red-500: #e5383b;
+  --green-50: #e7f7ec;
+  --green-600: #16a34a;
+  --brand-kakao: #fee500;
+  --brand-naver: #03c75a;
+
+  /* Color · background */
+  --bg-canvas: var(--gray-50);
+  --bg-surface: var(--white);
+  --bg-subtle: var(--gray-100);
+  --bg-brand: var(--blue-500);
+  --bg-brand-pressed: var(--blue-600);
+  --bg-brand-subtle: var(--blue-50);
+  --bg-brand-muted: var(--blue-100);
+  --bg-danger-subtle: var(--red-50);
+  --bg-success-subtle: var(--green-50);
+  --bg-alarm: var(--navy-900);
+  --bg-alarm-card: var(--navy-700);
+  --bg-kakao: var(--brand-kakao);
+  --bg-naver: var(--brand-naver);
+  --bg-disabled: var(--gray-200);
+  --bg-toggle-off: var(--gray-300);
+
+  /* Color · text */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-500);
+  --text-tertiary: var(--gray-400);
+  --text-on-brand: var(--white);
+  --text-brand: var(--blue-500);
+  --text-danger: var(--red-500);
+  --text-success: var(--green-600);
+  --text-on-kakao: var(--black);
+  --text-disabled: var(--gray-400);
+
+  /* Color · icon */
+  --icon-default: var(--gray-500);
+  --icon-strong: var(--blue-800);
+  --icon-brand: var(--blue-500);
+  --icon-danger: var(--red-500);
+  --icon-success: var(--green-600);
+  --icon-inverse: var(--white);
+
+  /* Color · border, chart */
+  --border-default: var(--gray-200);
+  --border-strong: var(--gray-300);
+  --border-brand: var(--blue-500);
+  --border-danger: var(--red-500);
+  --chart-bar: var(--blue-500);
+  --chart-bar-muted: var(--blue-300);
+
+  /* Spacing */
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  /* Effect */
+  --shadow-card: 0 2px 12px rgba(17, 24, 39, 0.06);
+  --shadow-sheet: 0 -4px 24px rgba(17, 24, 39, 0.12);
+
+  /* Typography */
+  --font-sans: 'Noto Sans KR', 'Apple SD Gothic Neo', system-ui, sans-serif;
+}
+
+/* 텍스트 스타일 (피그마 Text Styles) */
+.t-display-time { font-size: 72px; line-height: 84px; font-weight: 300; }
+.t-display-l { font-size: 32px; line-height: 40px; font-weight: 700; letter-spacing: -0.02em; }
+.t-title-l { font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: -0.02em; }
+.t-title-m { font-size: 20px; line-height: 28px; font-weight: 700; letter-spacing: -0.01em; }
+.t-title-s { font-size: 18px; line-height: 26px; font-weight: 700; letter-spacing: -0.01em; }
+.t-body-l-bold { font-size: 16px; line-height: 24px; font-weight: 700; }
+.t-body-l { font-size: 16px; line-height: 24px; font-weight: 400; }
+.t-body-m-medium { font-size: 15px; line-height: 22px; font-weight: 500; }
+.t-body-m { font-size: 15px; line-height: 22px; font-weight: 400; }
+.t-body-s-medium { font-size: 14px; line-height: 20px; font-weight: 500; }
+.t-body-s { font-size: 14px; line-height: 20px; font-weight: 400; }
+.t-caption-medium { font-size: 12px; line-height: 16px; font-weight: 500; }
+.t-caption { font-size: 12px; line-height: 16px; font-weight: 400; }
+.t-label-nav { font-size: 11px; line-height: 14px; font-weight: 500; }
+
+.c-primary { color: var(--text-primary); }
+.c-secondary { color: var(--text-secondary); }
+.c-tertiary { color: var(--text-tertiary); }
+.c-brand { color: var(--text-brand); }
+.c-danger { color: var(--text-danger); }
+.c-success { color: var(--text-success); }
+.c-on-brand { color: var(--text-on-brand); }
