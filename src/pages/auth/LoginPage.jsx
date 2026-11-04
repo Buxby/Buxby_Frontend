@@ -5,6 +5,9 @@ import { Button, InputField, SocialLoginButton } from '../../components/controls
 import { getMe, login, socialLogin } from '../../api/auth'
 import { useAppState } from '../../store/context'
 
+// 개발 서버 전용: 백엔드 없이 로그인 이후 화면을 확인할 때 쓴다 (빌드에는 적용되지 않음)
+const SKIP_LOGIN = import.meta.env.DEV && import.meta.env.VITE_SKIP_LOGIN === 'true'
+
 // A2 로그인 · A3 로그인 오류
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -16,11 +19,15 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const notice = location.state?.message
 
-  const canSubmit = email.trim() && password && !submitting
+  const canSubmit = SKIP_LOGIN || (email.trim() && password && !submitting)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     if (!canSubmit) return
+    if (SKIP_LOGIN) {
+      navigate(state.permissionsDone ? '/home' : '/permissions', { replace: true })
+      return
+    }
     setError('')
     setSubmitting(true)
     try {
