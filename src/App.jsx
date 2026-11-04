@@ -1,274 +1,85 @@
+import { useEffect } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
+import { useAppState } from './store/context'
 
-import { useEffect, useState } from 'react'
-import './App.css'
+import StartPage from './pages/auth/StartPage'
+import LoginPage from './pages/auth/LoginPage'
+import SignupPage from './pages/auth/SignupPage'
+import PermissionPage from './pages/auth/PermissionPage'
+import HomePage from './pages/home/HomePage'
+import DestinationSearchPage from './pages/home/DestinationSearchPage'
+import OriginSelectPage from './pages/home/OriginSelectPage'
+import RouteSelectPage from './pages/home/RouteSelectPage'
+import RecommendRoutePage from './pages/route/RecommendRoutePage'
+import RouteDetailPage from './pages/route/RouteDetailPage'
+import RouteOptionsPage from './pages/route/RouteOptionsPage'
+import DelayPage from './pages/route/DelayPage'
+import PrepLearningPage from './pages/alarm/PrepLearningPage'
+import PrepEditPage from './pages/alarm/PrepEditPage'
+import AlarmSettingsPage from './pages/alarm/AlarmSettingsPage'
+import WakeAlarmPage from './pages/alarm/WakeAlarmPage'
+import DepartAlarmPage from './pages/alarm/DepartAlarmPage'
+import PostponedPage from './pages/alarm/PostponedPage'
+import MorePage from './pages/more/MorePage'
+import AdFreePage from './pages/more/AdFreePage'
+import PermissionSettingsPage from './pages/more/PermissionSettingsPage'
+import ScreensPage from './pages/ScreensPage'
 
-import {
-  signup,
-  login,
-  getMe,
-  logout,
-  socialLogin
-} from './api/auth'
+// 간편 로그인 후 백엔드가 /?socialLogin=success|failed 로 돌려보낸다
+function SocialLoginRedirect() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { state } = useAppState()
 
-import MapView from "./components/MapView";
-
-function App() {
-  // 화면 모드
-  const [mode, setMode] = useState('login')
-
-  // 입력 데이터
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [nickname, setNickname] = useState('')
-
-  // 로그인 사용자
-  const [user, setUser] = useState(null)
-
-  // 화면 상태
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
-
-  // 최초 실행 시 로그인 상태 확인
   useEffect(() => {
-    let cancelled = false
+    const result = new URLSearchParams(location.search).get('socialLogin')
+    if (result === 'success') navigate(state.permissionsDone ? '/home' : '/permissions', { replace: true })
+    if (result === 'failed') navigate('/login', { replace: true, state: { error: '간편 로그인에 실패했어요. 다시 시도해 주세요.' } })
+  }, [location.search, navigate, state.permissionsDone])
 
-    async function checkLogin() {
-      try {
-        const data = await getMe()
-
-        if (!cancelled) {
-          setUser(data)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setError(error.message)
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    checkLogin()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  // 회원가입 또는 로그인
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    setError('')
-    setMessage('')
-
-    try {
-      if (mode === 'signup') {
-        await signup({
-          email,
-          password,
-          nickname,
-        })
-
-        setMessage('회원가입이 완료되었습니다. 로그인해 주세요.')
-        setMode('login')
-        setPassword('')
-      } else {
-        await login({
-          email,
-          password,
-        })
-
-        const data = await getMe()
-
-        if (!data) {
-          throw new Error('로그인 상태를 확인할 수 없습니다.')
-        }
-
-        setUser(data)
-        setPassword('')
-      }
-    } catch (error) {
-      setError(error.message)
-    }
-  }
-
-  // 로그아웃
-  const handleLogout = async () => {
-    try {
-      await logout()
-
-      setUser(null)
-      setEmail('')
-      setPassword('')
-      setNickname('')
-      setMessage('로그아웃되었습니다.')
-      setError('')
-    } catch (error) {
-      setError(error.message)
-    }
-  }
-
-  // 최초 로그인 확인 중
-  if (loading) {
-    return (
-      <main className="container">
-        <p>로그인 상태를 확인하고 있습니다.</p>
-      </main>
-    )
-  }
-
-  // 로그인 성공 화면
-  if (user) {
-    return (
-      <main className="container">
-        <section className="card">
-          <h1>교통비서</h1>
-
-          <p className="subtitle">
-            로그인이 완료되었습니다.
-          </p>
-
-          <div className="user-info">
-            <h2>환영합니다!</h2>
-
-            <p>
-              <strong>닉네임:</strong> {user.nickname}
-            </p>
-
-            <p>
-              <strong>이메일:</strong> {user.email}
-            </p>
-
-            <p>
-              <strong>로그인 방식:</strong> {user.provider}
-            </p>
-            <MapView />
-          </div>
-
-          <button
-            className="main-button"
-            onClick={handleLogout}
-          >
-            로그아웃
-          </button>
-
-          {error && (
-            <p className="error">{error}</p>
-          )}
-        </section>
-      </main>
-    )
-  }
-
-  // 로그인 / 회원가입 화면
-  return (
-    <main className="container">
-      <section className="card">
-        <h1>교통비서</h1>
-
-        <p className="subtitle">
-          편리한 대중교통 이용을 위한 나만의 비서
-        </p>
-
-        <div className="tab-menu">
-          <button
-            className={mode === 'login' ? 'active' : ''}
-            onClick={() => {
-              setMode('login')
-              setError('')
-              setMessage('')
-            }}
-          >
-            로그인
-          </button>
-
-          <button
-            className={mode === 'signup' ? 'active' : ''}
-            onClick={() => {
-              setMode('signup')
-              setError('')
-              setMessage('')
-            }}
-          >
-            회원가입
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {mode === 'signup' && (
-            <div className="form-group">
-              <label>닉네임</label>
-
-              <input
-                type="text"
-                placeholder="닉네임을 입력하세요"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                maxLength={30}
-                required
-              />
-            </div>
-          )}
-
-          <div className="form-group">
-            <label>이메일</label>
-
-            <input
-              type="email"
-              placeholder="이메일을 입력하세요"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>비밀번호</label>
-
-            <input
-              type="password"
-              placeholder="비밀번호를 입력하세요"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={mode === 'signup' ? 8 : undefined}
-              maxLength={64}
-              required
-            />
-          </div>
-
-          {error && (
-            <p className="error">{error}</p>
-          )}
-
-          {message && (
-            <p className="success">{message}</p>
-          )}
-
-          <button
-            type="submit"
-            className="main-button"
-          >
-            {mode === 'login' ? '로그인' : '회원가입'}
-          </button>
-          <button onClick={() => socialLogin('kakao')}>
-            카카오 로그인
-          </button>
-
-          <button onClick={() => socialLogin('google')}>
-            Google 로그인
-          </button>
-
-          <button onClick={() => socialLogin('naver')}>
-            네이버 로그인
-          </button>
-        </form>
-      </section>
-    </main>
-  )
+  return null
 }
 
-export default App
+export default function App() {
+  return (
+    <div className="app-column">
+      <SocialLoginRedirect />
+      <Routes>
+        {/* A. 로그인·간편 로그인 */}
+        <Route path="/" element={<StartPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/permissions" element={<PermissionPage />} />
+
+        {/* B. 홈·일정 설정 */}
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/schedule/destination" element={<DestinationSearchPage />} />
+        <Route path="/schedule/origin" element={<OriginSelectPage />} />
+        <Route path="/schedule/route" element={<RouteSelectPage />} />
+
+        {/* C. 카카오맵 지도·대중교통 노선 */}
+        <Route path="/route" element={<RecommendRoutePage />} />
+        <Route path="/route/detail" element={<RouteDetailPage />} />
+        <Route path="/route/options" element={<RouteOptionsPage />} />
+        <Route path="/route/delay" element={<DelayPage />} />
+
+        {/* D. 기상·출발 알람 */}
+        <Route path="/alarm" element={<PrepLearningPage />} />
+        <Route path="/alarm/prep" element={<PrepEditPage />} />
+        <Route path="/alarm/settings" element={<AlarmSettingsPage />} />
+        <Route path="/alarm/wake" element={<WakeAlarmPage />} />
+        <Route path="/alarm/depart" element={<DepartAlarmPage />} />
+        <Route path="/alarm/postponed" element={<PostponedPage />} />
+
+        {/* E. 더보기 */}
+        <Route path="/more" element={<MorePage />} />
+        <Route path="/more/ad-free" element={<AdFreePage />} />
+        <Route path="/more/permissions" element={<PermissionSettingsPage />} />
+
+        {/* 화면 목록 (디자인 검수용) */}
+        <Route path="/screens" element={<ScreensPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
+  )
+}
