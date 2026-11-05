@@ -424,7 +424,28 @@
   border-radius: var(--radius-full);
   background: var(--bg-subtle);
 }
-.stepper__value { width: 40px; text-align: center; }
+.stepper__field {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  width: 64px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  cursor: text;
+}
+.stepper__field:focus-within { border: 2px solid var(--border-brand); padding: 0 7px; }
+.stepper__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  text-align: right;
+}
 
 /* ===== RouteStep ===== */
 .route-step { display: flex; gap: 16px; }

@@ -26,6 +26,7 @@ export default function PrepEditPage() {
           <br />
           기록이 쌓이면 AI가 시간을 보정해요.
         </p>
+        <p className="t-caption c-brand">숫자를 눌러 직접 입력하거나, −/+로 1분씩 조절해요.</p>
         <Card>
           {items.map((p, i) => (
             <Fragment key={p.id}>
