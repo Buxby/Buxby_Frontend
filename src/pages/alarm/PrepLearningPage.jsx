@@ -50,7 +50,7 @@ function Learned({ prep }) {
 }
 
 // D2 기록 부족 (직접 입력값으로 계산)
-function Learning({ records }) {
+function Learning({ records, manualMinutes }) {
   const days = Math.min(records, LEARNING.requiredDays)
   return (
     <>
@@ -61,7 +61,7 @@ function Learning({ records }) {
           <Badge tone="neutral">직접 입력값 사용 중</Badge>
         </div>
         <span className="big-number">
-          <strong className="t-display-l">{LEARNING.manualMinutes}분</strong>
+          <strong className="t-display-l">{manualMinutes}분</strong>
           <span className="t-body-s c-secondary">직접 입력</span>
         </span>
         <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={LEARNING.requiredDays} aria-valuenow={days}>
@@ -98,7 +98,10 @@ export default function PrepLearningPage() {
   return (
     <Screen>
       <TopBar title="준비 시간 학습" right={<SettingsLink />} backTo="/home" />
-      <Content gap={12}>{learning ? <Learning records={state.records < LEARNING.requiredDays ? state.records : 3} /> : <Learned prep={state.prep} />}</Content>
+      <Content gap={12}>{learning ? <Learning
+            records={state.records < LEARNING.requiredDays ? state.records : 3}
+            manualMinutes={state.prepMode === 'total' && state.prepTotal != null ? state.prepTotal : state.prep.reduce((s, p) => s + p.minutes, 0)}
+          /> : <Learned prep={state.prep} />}</Content>
       <Footer>
         <Button variant="secondary" onClick={() => navigate('/alarm/prep')}>
           {learning ? '준비 항목 직접 입력하기' : '준비 시간 다시 설정하기'}

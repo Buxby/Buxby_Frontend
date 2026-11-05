@@ -440,6 +440,14 @@
   cursor: text;
 }
 .stepper__field:focus-within { border: 2px solid var(--border-brand); padding: 0 7px; }
+.stepper__field--l {
+  flex: 1;
+  width: auto;
+  height: 64px;
+  gap: 4px;
+  border: 2px solid var(--border-brand);
+  border-radius: var(--radius-md);
+}
 /* 숫자 자릿수만큼만 너비를 잡아 숫자+단위를 가운데 정렬 */
 .stepper__input {
   min-width: 1ch;

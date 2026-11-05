@@ -148,8 +148,10 @@ export function AdBanner({ hidden }) {
 }
 
 // 분 입력칸: 입력하는 동안은 글자 그대로 두고, 포커스가 빠지거나 Enter를 누르면 0~120분으로 맞춰 저장
-function MinutesField({ name, minutes, onChange }) {
+// size="l": D3-1 한 번에 입력용 큰 입력칸
+export function MinutesField({ name, minutes, onChange, size = 's' }) {
   const [draft, setDraft] = useState(null)
+  const large = size === 'l'
   const commit = () => {
     if (draft === null) return
     const n = Number.parseInt(draft, 10)
@@ -157,9 +159,9 @@ function MinutesField({ name, minutes, onChange }) {
     setDraft(null)
   }
   return (
-    <label className="stepper__field">
+    <label className={`stepper__field ${large ? 'stepper__field--l' : ''}`}>
       <input
-        className="stepper__input t-body-m-medium"
+        className={`stepper__input ${large ? 't-display-l' : 't-body-m-medium'}`}
         type="text"
         inputMode="numeric"
         pattern="[0-9]*"
@@ -174,7 +176,7 @@ function MinutesField({ name, minutes, onChange }) {
           if (e.key === 'Enter') e.currentTarget.blur()
         }}
       />
-      <span className="t-body-s c-secondary">분</span>
+      <span className={`${large ? 't-title-s' : 't-body-s'} c-secondary`}>분</span>
     </label>
   )
 }
