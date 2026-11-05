@@ -252,10 +252,11 @@ export function SectionLabel({ children }) {
   return <p className="section-label t-body-s-medium c-secondary">{children}</p>
 }
 
-export function Notice({ icon: NoticeIcon = Info, tone = 'brand', children }) {
+// center: 아이콘(16px)을 문구와 세로 가운데로 맞춤 (E2)
+export function Notice({ icon: NoticeIcon = Info, tone = 'brand', center = false, children }) {
   return (
-    <p className={`notice notice--${tone}`}>
-      <NoticeIcon size={18} aria-hidden="true" />
+    <p className={`notice notice--${tone} ${center ? 'notice--center' : ''}`}>
+      <NoticeIcon size={center ? 16 : 18} aria-hidden="true" />
       <span className="t-caption-medium">{children}</span>
     </p>
   )

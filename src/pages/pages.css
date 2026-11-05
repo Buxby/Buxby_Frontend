@@ -185,8 +185,12 @@
 
 .depart-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--radius-full); background: var(--bg-alarm-card); }
 .count-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--radius-xl); background: var(--bg-surface); color: var(--text-primary); }
-.count-card__row { display: flex; justify-content: space-between; }
+/* 세 칸을 같은 너비로 나눠 가운데 칸(버스 도착)을 카드 정가운데에 둔다 */
+.count-card__row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .count-card__row > span { display: flex; flex-direction: column; gap: 2px; }
+.count-card__row > span:nth-child(1) { align-items: flex-start; }
+.count-card__row > span:nth-child(2) { align-items: center; text-align: center; }
+.count-card__row > span:nth-child(3) { align-items: flex-end; text-align: right; }
 
 /* ===== E. 더보기 ===== */
 .profile-card { flex-direction: row; align-items: center; gap: 16px; padding: 20px; }
