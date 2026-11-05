@@ -166,6 +166,7 @@ function MinutesField({ name, minutes, onChange }) {
         maxLength={3}
         aria-label={`${name} 준비 시간(분)`}
         value={draft ?? String(minutes)}
+        style={{ width: `${Math.max(1, (draft ?? String(minutes)).length)}ch` }}
         onFocus={(e) => e.target.select()}
         onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, ''))}
         onBlur={commit}

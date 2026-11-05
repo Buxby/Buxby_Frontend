@@ -427,6 +427,7 @@
 .stepper__field {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 2px;
   width: 64px;
   height: 32px;
@@ -437,14 +438,16 @@
   cursor: text;
 }
 .stepper__field:focus-within { border: 2px solid var(--border-brand); padding: 0 7px; }
+/* 숫자 자릿수만큼만 너비를 잡아 숫자+단위를 가운데 정렬 */
 .stepper__input {
-  flex: 1;
-  min-width: 0;
+  min-width: 1ch;
+  max-width: 3ch;
   padding: 0;
   border: 0;
   outline: 0;
   background: transparent;
-  text-align: right;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ===== RouteStep ===== */
