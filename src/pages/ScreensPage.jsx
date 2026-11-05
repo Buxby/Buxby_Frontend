@@ -36,6 +36,7 @@ const GROUPS = [
       ['C3', '경로 옵션 비교', '/route/options'],
       ['C4', '추천 경로 · 불러오는 중', '/route?state=loading'],
       ['C5', '추천 경로 · 불러오기 실패', '/route?state=error'],
+      ['C6', '추천 경로 · 곧 도착 (5분 이하 빨간색)', '/route?state=soon'],
     ],
   },
   {
