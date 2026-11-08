@@ -23,7 +23,7 @@ export default function AdFreePage() {
           버스비 쓰기
         </h1>
         <p className="t-body-m c-secondary">₩3,900을 한 번만 결제하면 계속 광고 없이 써요. 기능은 무료와 똑같아요.</p>
-        <div className="two-col two-col--top">
+        <div className="two-col">
           {PLANS.map((p) => (
             <section key={p.name} className={`plan ${p.on ? 'plan--on' : ''}`}>
               <p className={`t-body-l-bold ${p.on ? 'c-brand' : ''}`}>{p.name}</p>
@@ -36,7 +36,7 @@ export default function AdFreePage() {
             </section>
           ))}
         </div>
-        <Notice tone="neutral">알람이 울리는 화면에는 무료 이용자에게도 광고를 넣지 않아요.</Notice>
+        <Notice tone="neutral" center>알람이 울리는 화면에는 무료 이용자에게도 광고를 넣지 않아요.</Notice>
       </Content>
       <Footer>
         <Button onClick={() => showToast('결제 기능은 준비 중이에요.')}>₩3,900 결제하기</Button>

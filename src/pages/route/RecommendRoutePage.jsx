@@ -5,7 +5,7 @@ import { BottomNav, Content, Screen, TopBar } from '../../components/layout'
 import { Button } from '../../components/controls'
 import { AdBanner, Badge, Card, IconTile, Notice, TimeRange } from '../../components/display'
 import KakaoMap from '../../components/KakaoMap'
-import { ALARM, PLACES, RECOMMEND } from '../../data/mock'
+import { ALARM, PLACES, RECOMMEND, RECOMMEND_SOON, URGENT_MINUTES } from '../../data/mock'
 
 const ROUTE_PATH = [
   [PLACES.stop.lat, PLACES.stop.lng],
@@ -14,18 +14,26 @@ const ROUTE_PATH = [
   [PLACES.destination.lat, PLACES.destination.lng],
 ]
 
-export function BusNow({ sub = RECOMMEND.sub, right = `${RECOMMEND.arrivesIn}분 후`, rightSub = `(${RECOMMEND.arrivesAt})`, onClick }) {
+// 버스 도착까지 URGENT_MINUTES(5분) 이하면 도착 시간을 빨간색으로 표시 (C6)
+export function BusNow({ data = RECOMMEND, sub = data.sub, atSuffix = '', onClick }) {
   const Tag = onClick ? 'button' : 'div'
+  const urgent = data.arrivesIn <= URGENT_MINUTES
   return (
     <Tag type={onClick ? 'button' : undefined} className="bus-now" onClick={onClick}>
       <IconTile icon={BusFront} />
       <span className="bus-now__text">
-        <span className="t-title-s">{RECOMMEND.bus}번</span>
+        <span className="t-title-s">{data.bus}번</span>
         <span className="t-body-s c-secondary">{sub}</span>
       </span>
       <span className="bus-now__right">
-        <span className="t-title-s c-brand">{right}</span>
-        <span className="t-caption c-secondary">{rightSub}</span>
+        <span className={`t-title-s ${urgent ? 'c-danger' : 'c-brand'}`}>
+          {urgent && <span className="sr-only">곧 도착, </span>}
+          {data.arrivesIn}분 후
+        </span>
+        <span className={`t-caption ${urgent ? 'c-danger' : 'c-secondary'}`}>
+          ({data.arrivesAt}
+          {atSuffix})
+        </span>
       </span>
     </Tag>
   )
@@ -35,18 +43,20 @@ function Skeleton({ w, h = 14 }) {
   return <span className="skeleton" style={{ width: w, height: h }} />
 }
 
-// C1 추천 경로 · C4 불러오는 중 · C5 불러오기 실패
+// C1 추천 경로 · C4 불러오는 중 · C5 불러오기 실패 · C6 곧 도착(5분 이하)
 export default function RecommendRoutePage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const forced = params.get('state')
   const [status, setStatus] = useState(forced === 'error' ? 'error' : 'loading')
   const [attempt, setAttempt] = useState(0)
-
   // 실시간 버스 도착 정보 요청 자리 (노선 API 연동 전까지 예시 데이터)
+  // ?state=soon 은 도착 4분 전 예시 (검수용)
+  const data = forced === 'soon' ? { ...RECOMMEND, ...RECOMMEND_SOON } : RECOMMEND
+
   // ?state=loading | error 로 들어오면 첫 화면을 그 상태로 고정 (검수용)
   useEffect(() => {
-    if (attempt === 0 && forced) return undefined
+    if (attempt === 0 && (forced === 'loading' || forced === 'error')) return undefined
     const timer = setTimeout(() => setStatus('ready'), 700)
     return () => clearTimeout(timer)
   }, [attempt, forced])
@@ -91,14 +101,14 @@ export default function RecommendRoutePage() {
                 상세보기 <ChevronRight size={16} />
               </Link>
             </div>
-            <BusNow onClick={() => navigate('/route/delay')} />
+            <BusNow data={data} onClick={() => navigate('/route/delay')} />
             <p className="stop-line t-body-s c-secondary">
               <CircleDot size={16} color="var(--icon-brand)" />
-              {RECOMMEND.stop} · 도보 {RECOMMEND.walk}분
+              {data.stop} · 도보 {data.walk}분
             </p>
           </Card>
           <div className="two-col">
-            {RECOMMEND.next.map((n) => (
+            {data.next.map((n) => (
               <Card key={n.label} padded className="next-card">
                 <span className="t-body-s-medium">{n.label}</span>
                 <span className="t-caption c-secondary">
@@ -153,7 +163,7 @@ export default function RecommendRoutePage() {
               <span className="t-body-l-bold">마지막 정보</span>
               <Badge tone="neutral">{RECOMMEND.updatedAt} 기준</Badge>
             </div>
-            <BusNow sub={RECOMMEND.stop} rightSub={`(${RECOMMEND.arrivesAt} 예정)`} />
+            <BusNow sub={RECOMMEND.stop} atSuffix=" 예정" />
           </Card>
           <Notice>안전 알람 {ALARM.snoozeLimit}는 통신과 관계없이 그대로 울려요.</Notice>
           <div className="spacer" />

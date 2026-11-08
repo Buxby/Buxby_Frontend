@@ -1,5 +1,9 @@
+import { useState } from 'react'
 import { ArrowRight, BusFront, CarFront, ChevronRight, Info, Minus, Plus, Sparkle, SquareArrowOutUpRight } from 'lucide-react'
 import { Toggle } from './controls'
+
+const PREP_MINUTES_MAX = 120
+const clampMinutes = (n) => Math.min(PREP_MINUTES_MAX, Math.max(0, n))
 
 export function Card({ as: Tag = 'section', className = '', padded = false, children, ...rest }) {
   return (
@@ -143,7 +147,41 @@ export function AdBanner({ hidden }) {
   )
 }
 
-// 피그마 PrepRow: Mode=View/Edit
+// 분 입력칸: 입력하는 동안은 글자 그대로 두고, 포커스가 빠지거나 Enter를 누르면 0~120분으로 맞춰 저장
+// size="l": D3-1 한 번에 입력용 큰 입력칸
+export function MinutesField({ name, minutes, onChange, size = 's' }) {
+  const [draft, setDraft] = useState(null)
+  const large = size === 'l'
+  const commit = () => {
+    if (draft === null) return
+    const n = Number.parseInt(draft, 10)
+    onChange(Number.isNaN(n) ? minutes : clampMinutes(n))
+    setDraft(null)
+  }
+  return (
+    <label className={`stepper__field ${large ? 'stepper__field--l' : ''}`}>
+      <input
+        className={`stepper__input ${large ? 't-display-l' : 't-body-m-medium'}`}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={3}
+        aria-label={`${name} 준비 시간(분)`}
+        value={draft ?? String(minutes)}
+        style={{ width: `${Math.max(1, (draft ?? String(minutes)).length)}ch` }}
+        onFocus={(e) => e.target.select()}
+        onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, ''))}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur()
+        }}
+      />
+      <span className={`${large ? 't-title-s' : 't-body-s'} c-secondary`}>분</span>
+    </label>
+  )
+}
+
+// 피그마 PrepRow: Mode=View/Edit (Edit = 분 직접 입력 + −/+ 1분 조절)
 export function PrepRow({ icon, name, sub, minutes, onChange }) {
   return (
     <div className="prep-row">
@@ -154,11 +192,11 @@ export function PrepRow({ icon, name, sub, minutes, onChange }) {
       </span>
       {onChange && (
         <span className="stepper">
-          <button type="button" className="stepper__btn" aria-label={`${name} 1분 줄이기`} onClick={() => onChange(Math.max(0, minutes - 1))}>
+          <button type="button" className="stepper__btn" aria-label={`${name} 1분 줄이기`} onClick={() => onChange(clampMinutes(minutes - 1))}>
             <Minus size={16} color="var(--icon-strong)" />
           </button>
-          <span className="stepper__value t-body-m-medium">{minutes}분</span>
-          <button type="button" className="stepper__btn" aria-label={`${name} 1분 늘리기`} onClick={() => onChange(minutes + 1)}>
+          <MinutesField name={name} minutes={minutes} onChange={onChange} />
+          <button type="button" className="stepper__btn" aria-label={`${name} 1분 늘리기`} onClick={() => onChange(clampMinutes(minutes + 1))}>
             <Plus size={16} color="var(--icon-strong)" />
           </button>
         </span>
@@ -216,10 +254,11 @@ export function SectionLabel({ children }) {
   return <p className="section-label t-body-s-medium c-secondary">{children}</p>
 }
 
-export function Notice({ icon: NoticeIcon = Info, tone = 'brand', children }) {
+// center: 아이콘(16px)을 문구와 세로 가운데로 맞춤 (E2)
+export function Notice({ icon: NoticeIcon = Info, tone = 'brand', center = false, children }) {
   return (
-    <p className={`notice notice--${tone}`}>
-      <NoticeIcon size={18} aria-hidden="true" />
+    <p className={`notice notice--${tone} ${center ? 'notice--center' : ''}`}>
+      <NoticeIcon size={center ? 16 : 18} aria-hidden="true" />
       <span className="t-caption-medium">{children}</span>
     </p>
   )

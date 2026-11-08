@@ -351,6 +351,7 @@
   border-radius: var(--radius-md);
 }
 .notice svg { flex-shrink: 0; }
+.notice--center { align-items: center; }
 .notice--brand { background: var(--bg-brand-subtle); color: var(--text-brand); }
 .notice--neutral { background: var(--bg-canvas); color: var(--text-secondary); }
 .notice--neutral .t-caption-medium { font-weight: 400; }
@@ -385,9 +386,10 @@
 .time-range__box {
   flex: 1;
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 12px 16px;
+  padding: 12px;
   border-radius: var(--radius-md);
   background: var(--bg-surface);
 }
@@ -424,7 +426,39 @@
   border-radius: var(--radius-full);
   background: var(--bg-subtle);
 }
-.stepper__value { width: 40px; text-align: center; }
+.stepper__field {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 64px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  cursor: text;
+}
+.stepper__field:focus-within { border: 2px solid var(--border-brand); padding: 0 7px; }
+.stepper__field--l {
+  flex: 1;
+  width: auto;
+  height: 64px;
+  gap: 4px;
+  border: 2px solid var(--border-brand);
+  border-radius: var(--radius-md);
+}
+/* 숫자 자릿수만큼만 너비를 잡아 숫자+단위를 가운데 정렬 */
+.stepper__input {
+  min-width: 1ch;
+  max-width: 3ch;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
 
 /* ===== RouteStep ===== */
 .route-step { display: flex; gap: 16px; }

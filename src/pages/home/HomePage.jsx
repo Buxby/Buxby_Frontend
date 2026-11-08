@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { BusFront, Briefcase, Clock, GraduationCap, MapPin, Settings, ShieldCheck, User } from 'lucide-react'
+import { BusFront, Briefcase, Clock, GraduationCap, MapPin, RefreshCw, Settings, ShieldCheck, User } from 'lucide-react'
 import { BottomNav, Content, Footer, Screen } from '../../components/layout'
 import { Button, Chip } from '../../components/controls'
 import { AdBanner, Badge, Card, Divider, IllustrationSlot, ListRow, Toast } from '../../components/display'
@@ -43,15 +43,33 @@ function Hero() {
 }
 
 // B3 알람 설정됨
-function AlarmSetView({ state, onEdit }) {
+function AlarmSetView({ state, onEdit, onRefreshed }) {
   const navigate = useNavigate()
+  const [refreshing, setRefreshing] = useState(false)
+
+  // 버스 도착 정보를 다시 받아 알람 시각을 재계산하는 자리 (알람 API 연동 전까지 예시)
+  const refresh = () => {
+    if (refreshing) return
+    setRefreshing(true)
+    setTimeout(() => {
+      setRefreshing(false)
+      onRefreshed('버스 정보를 새로 받아 알람을 다시 맞췄어요.')
+    }, 700)
+  }
+
   return (
     <>
-      <button type="button" className="next-alarm" onClick={() => navigate('/alarm/wake')} aria-label="기상 알람 미리 보기">
-        <span className="next-alarm__top">
+      <section className="next-alarm">
+        <div className="next-alarm__top">
           <span className="t-body-s-medium">{ALARM.dayLabel} 기상 알람</span>
-          <span className="next-alarm__live t-caption-medium">실시간 조정 중</span>
-        </span>
+          <span className="next-alarm__live-group">
+            <span className="next-alarm__live t-caption-medium">실시간 조정 중</span>
+            <button type="button" className="next-alarm__refresh" onClick={refresh} aria-label="알람 시각 새로고침" disabled={refreshing}>
+              <RefreshCw size={16} className={refreshing ? 'spin' : ''} />
+            </button>
+          </span>
+        </div>
+        <button type="button" className="next-alarm__body" onClick={() => navigate('/alarm/wake')} aria-label="기상 알람 미리 보기">
         <span className="t-display-l">{ALARM.wakeLabel}</span>
         <span className="t-body-s">160번 7:12 도착에 맞췄어요. 버스가 늦으면 알람도 미뤄져요.</span>
         <span className="next-alarm__timeline">
@@ -67,7 +85,8 @@ function AlarmSetView({ state, onEdit }) {
             </span>
           ))}
         </span>
-      </button>
+        </button>
+      </section>
       <Card>
         <ListRow icon={GraduationCap} label={`${state.category} · ${formatArrival(state.arrival, state.days).split(' · ')[1] ?? ''}`} value={`${state.destination?.name} · ${formatArrival(state.arrival)}`} onClick={onEdit} />
         <Divider />
@@ -98,11 +117,12 @@ export default function HomePage() {
       <Screen>
         <HomeHeader />
         <Content gap={16}>
-          <AlarmSetView state={state} onEdit={() => update({ alarmSet: false })} />
+          <AlarmSetView state={state} onEdit={() => update({ alarmSet: false })} onRefreshed={showToast} />
           <div className="spacer" />
           <AdBanner />
         </Content>
         <BottomNav />
+        <Toast message={toast} />
       </Screen>
     )
   }

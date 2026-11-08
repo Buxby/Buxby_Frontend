@@ -41,7 +41,20 @@
   color: var(--text-on-brand);
 }
 .next-alarm__top { display: flex; justify-content: space-between; align-items: center; }
+.next-alarm__live-group { display: inline-flex; align-items: center; gap: 8px; }
 .next-alarm__live { padding: 2px 8px; border-radius: var(--radius-sm); background: var(--bg-alarm-card); }
+.next-alarm__refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--bg-alarm-card);
+  color: var(--icon-inverse);
+}
+.next-alarm__refresh:disabled { opacity: 0.7; }
+.next-alarm__body { display: flex; flex-direction: column; gap: 12px; text-align: left; color: inherit; }
 .next-alarm__timeline {
   display: flex;
   justify-content: space-between;
@@ -164,6 +177,18 @@
 .how-box { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--radius-lg); background: var(--bg-brand-subtle); }
 .how-box__row { display: flex; align-items: flex-start; gap: 10px; }
 .how-box__row svg { flex-shrink: 0; margin-top: 1px; }
+.bulk-card { gap: 16px; padding: 20px; }
+.bulk-card__input { display: flex; align-items: center; gap: 12px; }
+.round-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--bg-subtle);
+}
 .add-row { display: flex; align-items: center; gap: 8px; padding: 16px 20px; text-align: left; }
 .total-box { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-radius: var(--radius-lg); background: var(--bg-brand-subtle); }
 
@@ -185,8 +210,12 @@
 
 .depart-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--radius-full); background: var(--bg-alarm-card); }
 .count-card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--radius-xl); background: var(--bg-surface); color: var(--text-primary); }
-.count-card__row { display: flex; justify-content: space-between; }
+/* 세 칸을 같은 너비로 나눠 가운데 칸(버스 도착)을 카드 정가운데에 둔다 */
+.count-card__row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .count-card__row > span { display: flex; flex-direction: column; gap: 2px; }
+.count-card__row > span:nth-child(1) { align-items: flex-start; }
+.count-card__row > span:nth-child(2) { align-items: center; text-align: center; }
+.count-card__row > span:nth-child(3) { align-items: flex-end; text-align: right; }
 
 /* ===== E. 더보기 ===== */
 .profile-card { flex-direction: row; align-items: center; gap: 16px; padding: 20px; }

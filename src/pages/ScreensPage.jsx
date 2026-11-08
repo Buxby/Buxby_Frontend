@@ -36,6 +36,7 @@ const GROUPS = [
       ['C3', '경로 옵션 비교', '/route/options'],
       ['C4', '추천 경로 · 불러오는 중', '/route?state=loading'],
       ['C5', '추천 경로 · 불러오기 실패', '/route?state=error'],
+      ['C6', '추천 경로 · 곧 도착 (5분 이하 빨간색)', '/route?state=soon'],
     ],
   },
   {
@@ -43,7 +44,8 @@ const GROUPS = [
     items: [
       ['D1', '준비 시간 학습', '/alarm'],
       ['D2', '준비 시간 학습 · 기록 부족', '/alarm?state=learning'],
-      ['D3', '준비 항목 편집', '/alarm/prep'],
+      ['D3', '준비 항목 편집 (항목별로)', '/alarm/prep?mode=items'],
+      ['D3-1', '준비 시간 설정 · 한 번에 입력', '/alarm/prep?mode=total'],
       ['D4', '알람 설정', '/alarm/settings'],
       ['D5', '기상 알람', '/alarm/wake'],
       ['D6', '출발 알람', '/alarm/depart'],

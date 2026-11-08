@@ -33,8 +33,8 @@ npm run dev
 |---|---|
 | A. 로그인·간편 로그인 | `/` `/login` `/signup` `/permissions` |
 | B. 홈·일정 설정 | `/home` `/schedule/destination` `/schedule/origin` `/schedule/route` |
-| C. 지도·대중교통 노선 | `/route` `/route/detail` `/route/options` (`/route?state=loading`, `?state=error`) |
-| D. 기상·출발 알람 | `/alarm` (`?state=learning`) `/alarm/prep` `/alarm/settings` `/alarm/wake` `/alarm/depart` `/alarm/postponed` `/route/delay` |
+| C. 지도·대중교통 노선 | `/route` `/route/detail` `/route/options` (`/route?state=loading`, `?state=error`, `?state=soon`) |
+| D. 기상·출발 알람 | `/alarm` (`?state=learning`) `/alarm/prep` (`?mode=total`) `/alarm/settings` `/alarm/wake` `/alarm/depart` `/alarm/postponed` `/route/delay` |
 | E. 더보기 | `/more` `/more/ad-free` `/more/permissions` |
 
 ## 폴더

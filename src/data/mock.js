@@ -53,6 +53,19 @@ export const RECOMMEND = {
   updatedAt: '오전 7:05',
 }
 
+// 버스 도착까지 이 시간(분) 이하이면 도착 시간을 빨간색으로 표시
+export const URGENT_MINUTES = 5
+
+// C6 곧 도착 예시: 도착 4분 전
+export const RECOMMEND_SOON = {
+  arrivesIn: 4,
+  arrivesAt: '오전 7:09',
+  next: [
+    { label: '다음 버스', in: 15, at: '오전 7:20' },
+    { label: '그다음 버스', in: 29, at: '오전 7:34' },
+  ],
+}
+
 export const ROUTE_STEPS = [
   { type: 'walk', title: '도보 8분', sub: '집 → 구로디지털단지역 정류장 (550m)' },
   { type: 'board', title: '구로디지털단지역 정류장 승차', sub: '160번 · 7분 후 도착 (오전 7:12)' },

@@ -14,6 +14,8 @@ const DEFAULT_STATE = {
   alarmSet: false,
   permissionsDone: false,
   prep: DEFAULT_PREP,
+  prepMode: 'items', // 'items' 항목별 입력 | 'total' 한 번에 입력
+  prepTotal: null,
   records: 14,
   settings: {
     autoAdjust: true,
