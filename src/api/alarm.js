@@ -9,12 +9,12 @@ export function createReservation(body) {
   return request('/api/alarm-reservations', { method: 'POST', body })
 }
 
-export function deleteReservation(id, userId) {
-  return request(`/api/alarm-reservations/${id}`, { method: 'DELETE', query: { userId } })
+export function deleteReservation(id) {
+  return request(`/api/alarm-reservations/${id}`, { method: 'DELETE' })
 }
 
-export function predictPreparation(userId) {
-  return request('/api/preparation/predict', { query: { userId } })
+export function predictPreparation() {
+  return request('/api/preparation/predict')
 }
 
 export function recordPreparation(body) {
