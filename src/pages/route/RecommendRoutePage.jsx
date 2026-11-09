@@ -65,7 +65,7 @@ export default function RecommendRoutePage() {
   useEffect(() => {
     if (live) {
       let cancelled = false
-      matchBusArrivals(origin, destination)
+      matchBusArrivals(origin, destination, detail)
         .then((json) => {
           if (cancelled) return
           const next = toRealtime(json, detail)
