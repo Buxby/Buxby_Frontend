@@ -1,10 +1,12 @@
-import { Fragment } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { AlarmClock, DoorOpen, Info, Pencil, Settings } from 'lucide-react'
 import { BottomNav, Content, Footer, Screen, TopBar } from '../../components/layout'
 import { Button } from '../../components/controls'
 import { Badge, Card, Divider, PrepRow } from '../../components/display'
 import { LEARNING, PREP_BY_DAY } from '../../data/mock'
+import { predictPreparation } from '../../api/alarm'
+import { getUserId } from '../../lib/alarmPlan'
 import { useAppState } from '../../store/context'
 import { prepIcon } from './prepIcons'
 
@@ -17,31 +19,33 @@ function SettingsLink() {
 }
 
 // D1 준비 시간 학습 (시안②)
-function Learned({ prep }) {
+function Learned({ prep, prediction }) {
   const max = Math.max(...PREP_BY_DAY.map((d) => d.minutes))
   return (
     <>
       <Card padded>
         <span className="t-body-m-medium c-secondary">평균 준비 시간</span>
         <span className="big-number">
-          <strong className="t-display-l">{LEARNING.averageMinutes}분</strong>
-          <Info size={18} color="var(--icon-default)" aria-label="요일별 평균으로 계산" />
+          <strong className="t-display-l">{prediction ? prediction.predictedMinutes : LEARNING.averageMinutes}분</strong>
+          <Info size={18} color="var(--icon-default)" aria-label={prediction ? '최근 기록 평균으로 계산' : '요일별 평균으로 계산'} />
         </span>
-        <div className="bar-chart" role="img" aria-label="요일별 평균 준비 시간">
-          {PREP_BY_DAY.map((d) => (
-            <span key={d.day} className="bar-chart__col">
-              <span className={`bar-chart__bar ${d.highlight ? '' : 'bar-chart__bar--muted'}`} style={{ height: Math.round((d.minutes / max) * 64) }} />
-              <span className="t-caption c-secondary">{d.day}</span>
-            </span>
-          ))}
-        </div>
-        <p className="t-caption c-tertiary">최근 2주간의 기록을 기반으로 계산했어요. 요일별 차이도 반영해요.</p>
+        {!prediction && (
+          <div className="bar-chart" role="img" aria-label="요일별 평균 준비 시간">
+            {PREP_BY_DAY.map((d) => (
+              <span key={d.day} className="bar-chart__col">
+                <span className={`bar-chart__bar ${d.highlight ? '' : 'bar-chart__bar--muted'}`} style={{ height: Math.round((d.minutes / max) * 64) }} />
+                <span className="t-caption c-secondary">{d.day}</span>
+              </span>
+            ))}
+          </div>
+        )}
+        <p className="t-caption c-tertiary">{prediction ? `최근 ${prediction.samples}회 기록의 평균이에요.` : '최근 2주간의 기록을 기반으로 계산했어요. 요일별 차이도 반영해요.'}</p>
       </Card>
       <Card>
         {prep.map((p, i) => (
           <Fragment key={p.id}>
             {i > 0 && <Divider />}
-            <PrepRow icon={prepIcon(p.icon)} name={p.name} sub={`평균 ${p.minutes}분`} />
+            <PrepRow icon={prepIcon(p.icon)} name={p.name} sub={prediction ? `${p.minutes}분` : `평균 ${p.minutes}분`} />
           </Fragment>
         ))}
       </Card>
@@ -51,7 +55,7 @@ function Learned({ prep }) {
 
 // D2 기록 부족 (직접 입력값으로 계산)
 function Learning({ records, manualMinutes }) {
-  const days = Math.min(records, LEARNING.requiredDays)
+  const count = Math.min(records, LEARNING.requiredDays)
   return (
     <>
       <Card padded>
@@ -64,13 +68,13 @@ function Learning({ records, manualMinutes }) {
           <strong className="t-display-l">{manualMinutes}분</strong>
           <span className="t-body-s c-secondary">직접 입력</span>
         </span>
-        <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={LEARNING.requiredDays} aria-valuenow={days}>
-          <span className="progress__bar" style={{ width: `${(days / LEARNING.requiredDays) * 100}%` }} />
+        <div className="progress" role="progressbar" aria-valuemin={0} aria-valuemax={LEARNING.requiredDays} aria-valuenow={count}>
+          <span className="progress__bar" style={{ width: `${(count / LEARNING.requiredDays) * 100}%` }} />
         </div>
         <span className="t-caption-medium c-brand">
-          {LEARNING.requiredDays}일 중 {days}일 기록됨
+          {LEARNING.requiredDays}회 중 {count}회 기록됨
         </span>
-        <p className="t-body-s c-secondary">{LEARNING.requiredDays}일이 쌓이면 AI가 요일별 평균 준비 시간으로 바꿔 계산해요.</p>
+        <p className="t-body-s c-secondary">기록이 {LEARNING.requiredDays}회 쌓이면 최근 기록의 평균 준비 시간으로 바꿔 계산해요.</p>
       </Card>
       <section className="how-box">
         <p className="t-body-m-medium c-brand">이렇게 기록해요</p>
@@ -93,15 +97,35 @@ export default function PrepLearningPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const { state } = useAppState()
-  const learning = params.get('state') === 'learning' || state.records < LEARNING.requiredDays
+  const forced = params.get('state') // learned | learning 은 예시 데이터로 보는 검수용
+  // undefined: 불러오는 중, null: 불러오기 실패
+  const [prediction, setPrediction] = useState(undefined)
+
+  useEffect(() => {
+    if (forced) return undefined
+    let cancelled = false
+    getUserId()
+      .then(predictPreparation)
+      .then((result) => !cancelled && setPrediction(result))
+      .catch(() => !cancelled && setPrediction(null))
+    return () => {
+      cancelled = true
+    }
+  }, [forced])
+
+  const samples = prediction?.samples ?? 0
+  const learning = forced ? forced === 'learning' : samples < LEARNING.requiredDays
+  const manualMinutes = state.prepMode === 'total' && state.prepTotal != null ? state.prepTotal : state.prep.reduce((s, p) => s + p.minutes, 0)
+  const loading = !forced && prediction === undefined
 
   return (
     <Screen>
       <TopBar title="준비 시간 학습" right={<SettingsLink />} backTo="/home" />
-      <Content gap={12}>{learning ? <Learning
-            records={state.records < LEARNING.requiredDays ? state.records : 3}
-            manualMinutes={state.prepMode === 'total' && state.prepTotal != null ? state.prepTotal : state.prep.reduce((s, p) => s + p.minutes, 0)}
-          /> : <Learned prep={state.prep} />}</Content>
+      <Content gap={12}>
+        {!loading && (learning
+          ? <Learning records={forced ? 3 : samples} manualMinutes={manualMinutes} />
+          : <Learned prep={state.prep} prediction={forced ? null : prediction} />)}
+      </Content>
       <Footer>
         <Button variant="secondary" onClick={() => navigate('/alarm/prep')}>
           {learning ? '준비 항목 직접 입력하기' : '준비 시간 다시 설정하기'}

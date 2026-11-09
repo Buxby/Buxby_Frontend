@@ -14,12 +14,17 @@ export default function OriginSelectPage() {
   const navigate = useNavigate()
   const { update } = useAppState()
   const [label, setLabel] = useState('집')
+  const [located, setLocated] = useState(null)
   const [toast, showToast] = useToast()
+  const place = located ? { ...PLACES.home, ...located, address: '현재 위치' } : PLACES.home
 
   const locate = () => {
     if (!navigator.geolocation) return showToast('이 브라우저는 현재 위치를 지원하지 않아요.')
     navigator.geolocation.getCurrentPosition(
-      () => showToast('현재 위치를 찾았어요.'),
+      ({ coords }) => {
+        setLocated({ lat: coords.latitude, lng: coords.longitude })
+        showToast('현재 위치를 찾았어요.')
+      },
       () => showToast('위치 권한을 허용해 주세요.'),
       { timeout: 8000 },
     )
@@ -27,7 +32,8 @@ export default function OriginSelectPage() {
 
   const confirm = () => {
     const name = label === '집' ? '내 집' : label
-    update({ origin: { ...PLACES.home, name } })
+    // 출발지가 바뀌면 이전 경로는 쓸 수 없다
+    update({ origin: { ...place, name }, route: null, routeDetail: null, routeOptions: null })
     navigate('/home')
   }
 
@@ -35,10 +41,11 @@ export default function OriginSelectPage() {
     <Screen bg="surface">
       <TopBar title="출발 위치" />
       <KakaoMap
+        key={located ? `${located.lat},${located.lng}` : 'home'}
         height={400}
         markers={[
-          { type: 'home', ...PLACES.home, x: 50, y: 44 },
-          { type: 'current', lat: 37.4861, lng: 126.9001, x: 63, y: 62 },
+          { type: 'home', ...place, x: 50, y: 44 },
+          ...(located ? [] : [{ type: 'current', lat: 37.4861, lng: 126.9001, x: 63, y: 62 }]),
         ]}
       >
         <button type="button" className="map-fab" onClick={locate} aria-label="현재 위치로 이동">
@@ -51,7 +58,7 @@ export default function OriginSelectPage() {
           <House size={24} color="var(--icon-brand)" />
           <div>
             <p className="t-body-l-bold">{label === '집' ? '내 집' : label}</p>
-            <p className="t-body-s c-secondary">{PLACES.home.address} (도로명 주소)</p>
+            <p className="t-body-s c-secondary">{located ? place.address : `${place.address} (도로명 주소)`}</p>
           </div>
         </div>
         <div className="chip-row" role="group" aria-label="장소 이름">

@@ -11,12 +11,16 @@ const DEFAULT_STATE = {
   days: ['월', '화', '수', '목', '금'],
   origin: null,
   route: null,
+  routeDetail: null, // 선택한 경로 (ODsay 응답 변환값)
+  routeOptions: null, // 현재 출발지·목적지의 경로 목록
+  lastRealtime: null, // 마지막으로 받은 실시간 도착 정보
+  plan: null, // 서버에 저장한 알람 계획
+  wakeOffAt: null, // 기상 알람을 끈 시각 (준비 시간 기록용)
   alarmSet: false,
   permissionsDone: false,
   prep: DEFAULT_PREP,
   prepMode: 'items', // 'items' 항목별 입력 | 'total' 한 번에 입력
   prepTotal: null,
-  records: 14,
   settings: {
     autoAdjust: true,
     snoozeLimit: '오전 6:45',
@@ -40,7 +44,7 @@ function loadState() {
   }
 }
 
-// 일정·알람 설정을 기기 브라우저에 저장 (백엔드 알람 API 연동 전까지 사용)
+// 일정·알람 설정을 기기 브라우저에 저장
 export function AppStateProvider({ children }) {
   const [state, setState] = useState(loadState)
 

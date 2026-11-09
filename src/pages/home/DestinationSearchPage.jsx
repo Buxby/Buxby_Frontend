@@ -10,7 +10,7 @@ import { useAppState } from '../../store/context'
 // B4 목적지 검색 (카카오 장소 검색, 키가 없으면 예시 결과)
 export default function DestinationSearchPage() {
   const navigate = useNavigate()
-  const { state, update } = useAppState()
+  const { update } = useAppState()
   const [keyword, setKeyword] = useState('동양미래')
   const [results, setResults] = useState(DESTINATION_RESULTS)
 
@@ -33,7 +33,8 @@ export default function DestinationSearchPage() {
   }, [keyword])
 
   const select = (place) => {
-    update({ destination: place, route: state.route ?? null })
+    // 목적지가 바뀌면 이전 경로는 쓸 수 없다
+    update({ destination: place, route: null, routeDetail: null, routeOptions: null })
     navigate('/home')
   }
 

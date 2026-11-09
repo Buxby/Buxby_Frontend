@@ -69,7 +69,7 @@ export default function PrepEditPage() {
         <p className="t-body-m c-secondary">
           일어나서 집을 나서기까지 하는 일을 적어 주세요.
           <br />
-          기록이 쌓이면 AI가 시간을 보정해요.
+          기록이 쌓이면 최근 기록의 평균으로 바꿔 계산해요.
         </p>
         <div className="chip-row chip-row--fill" role="group" aria-label="입력 방식">
           {MODES.map((m) => (
@@ -86,7 +86,7 @@ export default function PrepEditPage() {
               {items.map((p, i) => (
                 <Fragment key={p.id}>
                   {i > 0 && <Divider />}
-                  <PrepRow icon={prepIcon(p.icon)} name={p.name} sub={`평균 ${state.prep.find((s) => s.id === p.id)?.minutes ?? p.minutes}분`} minutes={p.minutes} onChange={(m) => change(p.id, m)} />
+                  <PrepRow icon={prepIcon(p.icon)} name={p.name} sub={`저장값 ${state.prep.find((s) => s.id === p.id)?.minutes ?? p.minutes}분`} minutes={p.minutes} onChange={(m) => change(p.id, m)} />
                 </Fragment>
               ))}
               <Divider />
@@ -102,7 +102,7 @@ export default function PrepEditPage() {
         ) : (
           <>
             <TotalInput value={bulk} onChange={setBulk} />
-            <Notice center>항목을 나누지 않고 전체 시간만 정해요. 기록이 쌓이면 AI가 항목별로 나눠 학습해요.</Notice>
+            <Notice center>항목을 나누지 않고 전체 시간만 정해요. 기록이 쌓이면 최근 기록의 평균으로 바꿔 계산해요.</Notice>
           </>
         )}
       </Content>

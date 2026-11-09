@@ -31,7 +31,7 @@ const GROUPS = [
   {
     title: 'C. 카카오맵 지도·대중교통 노선',
     items: [
-      ['C1', '추천 경로', '/route'],
+      ['C1', '추천 경로', '/route?state=preview'],
       ['C2', '노선 상세', '/route/detail'],
       ['C3', '경로 옵션 비교', '/route/options'],
       ['C4', '추천 경로 · 불러오는 중', '/route?state=loading'],
@@ -42,7 +42,7 @@ const GROUPS = [
   {
     title: 'D. 기상·출발 알람',
     items: [
-      ['D1', '준비 시간 학습', '/alarm'],
+      ['D1', '준비 시간 학습', '/alarm?state=learned'],
       ['D2', '준비 시간 학습 · 기록 부족', '/alarm?state=learning'],
       ['D3', '준비 항목 편집 (항목별로)', '/alarm/prep?mode=items'],
       ['D3-1', '준비 시간 설정 · 한 번에 입력', '/alarm/prep?mode=total'],
@@ -74,9 +74,10 @@ const FILLED = {
 export default function ScreensPage() {
   const { update } = useAppState()
   const prepare = (preset) => {
-    if (preset === 'empty') update({ destination: null, arrival: null, origin: null, route: null, alarmSet: false })
-    if (preset === 'filled') update({ ...FILLED, alarmSet: false })
-    if (preset === 'alarm') update({ ...FILLED, alarmSet: true })
+    const noPlan = { routeDetail: null, routeOptions: null, plan: null }
+    if (preset === 'empty') update({ ...noPlan, destination: null, arrival: null, origin: null, route: null, alarmSet: false })
+    if (preset === 'filled') update({ ...noPlan, ...FILLED, alarmSet: false })
+    if (preset === 'alarm') update({ ...noPlan, ...FILLED, alarmSet: true })
   }
 
   return (
