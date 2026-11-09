@@ -6,7 +6,6 @@ import { Button } from '../../components/controls'
 import { Badge, Card, Divider, PrepRow } from '../../components/display'
 import { LEARNING, PREP_BY_DAY } from '../../data/mock'
 import { predictPreparation } from '../../api/alarm'
-import { getUserId } from '../../lib/alarmPlan'
 import { useAppState } from '../../store/context'
 import { prepIcon } from './prepIcons'
 
@@ -104,8 +103,7 @@ export default function PrepLearningPage() {
   useEffect(() => {
     if (forced) return undefined
     let cancelled = false
-    getUserId()
-      .then(predictPreparation)
+    predictPreparation()
       .then((result) => !cancelled && setPrediction(result))
       .catch(() => !cancelled && setPrediction(null))
     return () => {

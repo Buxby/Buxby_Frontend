@@ -47,7 +47,7 @@ export default function DepartAlarmPage() {
     const minutes = plan ? prepMinutesSince(state.wakeOffAt) : null
     if (minutes) {
       // 기록 실패가 출발 안내를 막으면 안 되므로 다음 화면으로 그대로 이동한다
-      await recordPreparation({ userId: plan.userId, minutes }).catch(() => {})
+      await recordPreparation({ minutes }).catch(() => {})
     }
     if (plan) update({ wakeOffAt: null })
     navigate('/route')

@@ -62,7 +62,7 @@ function AlarmSetView({ state, update, onEdit, onRefreshed }) {
     if (!option) throw new Error('선택한 노선을 찾지 못했어요. 노선을 다시 선택해 주세요.')
     const next = await planAlarm(state, option)
     update({ plan: next, routeDetail: option, routeOptions: options })
-    await deleteReservation(plan.reservationId, plan.userId).catch(() => {})
+    await deleteReservation(plan.reservationId).catch(() => {})
   }
 
   const refresh = async () => {
@@ -162,7 +162,7 @@ export default function HomePage() {
   const editAlarm = () => {
     const { plan } = state
     update({ alarmSet: false, plan: null })
-    if (plan) deleteReservation(plan.reservationId, plan.userId).catch(() => showToast('이전 알람을 서버에서 지우지 못했어요.'))
+    if (plan) deleteReservation(plan.reservationId).catch(() => showToast('이전 알람을 서버에서 지우지 못했어요.'))
   }
 
   if (state.alarmSet && ready) {
