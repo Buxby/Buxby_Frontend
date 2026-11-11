@@ -6,8 +6,7 @@ import { Button } from '../../components/controls'
 import { AdBanner, Badge, Card, IconTile, Notice, TimeRange } from '../../components/display'
 import KakaoMap from '../../components/KakaoMap'
 import { ALARM, PLACES, RECOMMEND, RECOMMEND_SOON, URGENT_MINUTES } from '../../data/mock'
-import { matchBusArrivals } from '../../api/transit'
-import { toRealtime } from '../../lib/routes'
+import { loadRealtime } from '../../lib/busApproach'
 import { useAppState } from '../../store/context'
 
 const ROUTE_PATH = [
@@ -65,10 +64,9 @@ export default function RecommendRoutePage() {
   useEffect(() => {
     if (live) {
       let cancelled = false
-      matchBusArrivals(origin, destination, detail)
-        .then((json) => {
+      loadRealtime(origin, destination, detail)
+        .then((next) => {
           if (cancelled) return
-          const next = toRealtime(json, detail)
           setRealtime(next)
           if (next) update({ lastRealtime: next })
           setStatus('ready')
