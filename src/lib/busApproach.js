@@ -4,6 +4,9 @@ import { toRealtime } from './routes'
 
 const toMinutes = (seconds) => Math.max(0, Math.ceil(seconds / 60))
 
+// 0정류장 전은 버스가 내 정류장 바로 앞 구간에 있다는 뜻 (서울 안내 문구 '곧 도착')
+export const stopsLabel = (remainingStops) => (remainingStops > 0 ? `${remainingStops}정류장 전` : '곧 도착')
+
 // 받은 뒤 흐른 시간만큼 도착 시간을 줄인다
 export function remainingSeconds(arrival, receivedAt, now = Date.now()) {
   return arrival.arrivalSeconds - (Number(now) - new Date(receivedAt).getTime()) / 1000
@@ -27,7 +30,7 @@ export function approachToRealtime(json, option, now = new Date()) {
   const view = (a) => ({
     in: toMinutes(a.arrivalSeconds),
     at: clockLabel(addMinutes(now, a.arrivalSeconds / 60)),
-    text: `${a.remainingStops}정류장 전`,
+    text: stopsLabel(a.remainingStops),
   })
   const head = view(first)
   return {
@@ -44,7 +47,7 @@ export function approachToRealtime(json, option, now = new Date()) {
   }
 }
 
-// TAGO 지원 지역은 접근 정보로, 서울 등 미지원 지역은 서울시 도착정보로 실시간 카드를 만든다
+// 접근 정보(TAGO·서울)로 실시간 카드를 만들고, 둘 다 정류장을 못 찾으면 서울시 자동 매칭으로 한 번 더 찾는다
 export async function loadRealtime(origin, destination, option) {
   if (option.approach) {
     const json = await getBusApproach(option.approach)

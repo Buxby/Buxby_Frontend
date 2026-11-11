@@ -21,7 +21,7 @@ export function matchBusArrivals(origin, destination, option) {
   return request('/api/seoul/bus/auto-match', { query })
 }
 
-// 승차 정류장에 내 노선 버스가 몇 정류장 전·몇 초 후 도착하는지 (TAGO, 서울 제외)
+// 승차 정류장에 내 노선 버스가 몇 정류장 전·몇 초 후 도착하는지 (TAGO 지역은 TAGO, 서울은 서울시 도착정보)
 export function getBusApproach(approach) {
   const { stopId, stopName, stopLat, stopLng, routeIds, busNos } = approach
   return request('/api/bus/approach', {
