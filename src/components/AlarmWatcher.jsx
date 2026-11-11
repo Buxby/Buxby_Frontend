@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { getBusApproach } from '../api/transit'
-import { catchableArrival, remainingSeconds, shouldDepart } from '../lib/busApproach'
+import { catchableArrival, remainingSeconds, shouldDepart, stopsLabel } from '../lib/busApproach'
 import { useAppState } from '../store/context'
 
 const TICK_MS = 15000
@@ -86,7 +86,7 @@ export default function AlarmWatcher() {
         if (shouldDepart(arrivals, walk, buffer)) {
           const bus = catchableArrival(arrivals, walk)
           fire('depart', '/alarm/depart', '지금 나가야 해요',
-            `${bus.routeNo}번이 ${bus.remainingStops}정류장 전, 약 ${Math.ceil(bus.arrivalSeconds / 60)}분 후 도착해요.`)
+            `${bus.routeNo}번이 ${stopsLabel(bus.remainingStops)}, 약 ${Math.ceil(bus.arrivalSeconds / 60)}분 후 도착해요.`)
         }
         return
       }

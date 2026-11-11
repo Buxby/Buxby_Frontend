@@ -6,7 +6,7 @@ import { TimeRange } from '../../components/display'
 import { RECOMMEND } from '../../data/mock'
 import { recordPreparation } from '../../api/alarm'
 import { addMinutes, clockLabel, prepMinutesSince } from '../../lib/time'
-import { catchableArrival, remainingSeconds } from '../../lib/busApproach'
+import { catchableArrival, remainingSeconds, stopsLabel } from '../../lib/busApproach'
 import { useAppState } from '../../store/context'
 
 const PREVIEW = {
@@ -34,7 +34,7 @@ function liveBus(plan, detail, approach, now = new Date()) {
       return {
         bus: `${bus.routeNo}번`,
         boarding: addMinutes(now, bus.arrivalSeconds / 60),
-        stops: ` (${bus.remainingStops}정류장 전)`,
+        stops: ` (${stopsLabel(bus.remainingStops)})`,
         stop: approach.stopName,
       }
     }
