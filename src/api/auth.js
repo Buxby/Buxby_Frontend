@@ -71,9 +71,9 @@ export async function logout() {
   }
 }
 
-// 소셜 로그인 시작
+// 소셜 로그인 시작 (배포에서는 Vercel이 /oauth2를 백엔드로 넘기므로 같은 도메인을 쓴다)
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
+  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8080' : '')
 
 export function socialLogin(provider) {
 
