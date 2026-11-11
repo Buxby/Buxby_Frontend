@@ -43,6 +43,23 @@ export function loadKakaoMaps() {
   return loading
 }
 
+// 좌표 → 주소 (도로명 우선). SDK가 없거나 못 찾으면 null을 돌려준다.
+export async function addressAt(lat, lng) {
+  try {
+    const kakao = await loadKakaoMaps()
+    const geocoder = new kakao.maps.services.Geocoder()
+    return await new Promise((resolve) => {
+      geocoder.coord2Address(lng, lat, (result, status) => {
+        if (status !== kakao.maps.services.Status.OK || !result[0]) return resolve(null)
+        const { road_address: road, address } = result[0]
+        resolve(road?.address_name || address?.address_name || null)
+      })
+    })
+  } catch {
+    return null
+  }
+}
+
 // 카카오 장소 검색 (Places). SDK가 없으면 null을 돌려준다.
 export async function searchPlaces(keyword) {
   try {
