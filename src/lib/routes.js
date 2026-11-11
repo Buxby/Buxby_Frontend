@@ -53,6 +53,7 @@ function toOption(path, originName, destinationName) {
   const name = transit.map(sectionName).join(' → ')
   const transfers = transit.length - 1
   const mixed = firstBus && transit.some((s) => s.trafficType === SUBWAY)
+  const boardBus = transit[0].trafficType === BUS ? transit[0] : null
 
   return {
     id: `${name}|${transit[0].startName}`,
@@ -74,6 +75,15 @@ function toOption(path, originName, destinationName) {
     path: transit.flatMap(sectionPoints),
     steps: buildSteps(sections, originName, destinationName),
     recommended: false,
+    // 첫 탑승이 버스일 때만 실시간 접근 조회 (ODsay 지역 ID가 TAGO 정류소·노선 ID와 같은 체계)
+    approach: boardBus && {
+      stopId: boardBus.startLocalStationID ?? '',
+      stopName: boardBus.startName,
+      stopLat: Number(boardBus.startY),
+      stopLng: Number(boardBus.startX),
+      routeIds: (boardBus.lane ?? []).map((lane) => lane.busLocalBlID).filter(Boolean),
+      busNos: (boardBus.lane ?? []).map((lane) => lane.busNo).filter(Boolean),
+    },
   }
 }
 

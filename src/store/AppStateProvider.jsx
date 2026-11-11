@@ -16,6 +16,8 @@ const DEFAULT_STATE = {
   lastRealtime: null, // 마지막으로 받은 실시간 도착 정보
   plan: null, // 서버에 저장한 알람 계획
   wakeOffAt: null, // 기상 알람을 끈 시각 (준비 시간 기록용)
+  alarmFired: {}, // { wake, depart }: 이미 울린 알람의 예약 ID
+  lastApproach: null, // 출발 알람 판단에 쓴 마지막 버스 접근 정보 (+ receivedAt)
   alarmSet: false,
   permissionsDone: false,
   prep: DEFAULT_PREP,

@@ -24,6 +24,7 @@ import MorePage from './pages/more/MorePage'
 import AdFreePage from './pages/more/AdFreePage'
 import PermissionSettingsPage from './pages/more/PermissionSettingsPage'
 import ScreensPage from './pages/ScreensPage'
+import AlarmWatcher from './components/AlarmWatcher'
 
 // 간편 로그인 후 백엔드가 /?socialLogin=success|failed 로 돌려보낸다
 function SocialLoginRedirect() {
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <div className="app-column">
       <SocialLoginRedirect />
+      <AlarmWatcher />
       <Routes>
         {/* A. 로그인·간편 로그인 */}
         <Route path="/" element={<StartPage />} />
