@@ -87,10 +87,26 @@ function FallbackMap({ height, markers, callout, labels, route }) {
  * 카카오 지도.
  * markers: [{ type: 'home'|'bus'|'destination'|'current', lat, lng, x, y }]  (x, y는 지도 그림용 % 위치)
  * route:   [[lat, lng], ...] 버스 구간,  walk: [[lat, lng], ...] 도보 구간
+ * center:  { lat, lng } 바뀌면 지도를 그 위치로 옮긴다 (마커가 없으면 처음 중심으로도 씀)
+ * centerPin: 지도 가운데에 고정 핀을 보여준다 (위치 고르기용)
+ * onCenterChange(lat, lng): 지도를 움직이고 멈출 때마다 가운데 좌표를 알려준다
  */
-export default function KakaoMap({ height = 236, markers = [], route, walk, callout, labels, children }) {
+export default function KakaoMap({ height = 236, markers = [], route, walk, callout, labels, center, centerPin, onCenterChange, children }) {
   const containerRef = useRef(null)
+  const mapRef = useRef(null)
+  const onCenterChangeRef = useRef(onCenterChange)
   const [mode, setMode] = useState(hasKakaoKey() ? 'loading' : 'fallback')
+
+  useEffect(() => {
+    onCenterChangeRef.current = onCenterChange
+  }, [onCenterChange])
+
+  // 현재 위치 버튼 등으로 center가 바뀌면 지도를 옮긴다
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !center || mode !== 'kakao') return
+    map.panTo(new window.kakao.maps.LatLng(center.lat, center.lng))
+  }, [center, mode])
 
   useEffect(() => {
     if (!hasKakaoKey()) return undefined
@@ -101,7 +117,15 @@ export default function KakaoMap({ height = 236, markers = [], route, walk, call
       .then((kakao) => {
         if (cancelled || !containerRef.current) return
         const points = markers.map((m) => new kakao.maps.LatLng(m.lat, m.lng))
-        const map = new kakao.maps.Map(containerRef.current, { center: points[0] ?? new kakao.maps.LatLng(37.4852, 126.9013), level: 5 })
+        const start = points[0] ?? (center ? new kakao.maps.LatLng(center.lat, center.lng) : new kakao.maps.LatLng(37.4852, 126.9013))
+        const map = new kakao.maps.Map(containerRef.current, { center: start, level: centerPin ? 3 : 5 })
+        mapRef.current = map
+        kakao.maps.event.addListener(map, 'idle', () => {
+          const c = map.getCenter()
+          onCenterChangeRef.current?.(c.getLat(), c.getLng())
+        })
+        // 처음 그릴 때는 idle이 오지 않을 수 있어 시작 위치를 한 번 알려준다
+        onCenterChangeRef.current?.(start.getLat(), start.getLng())
         markers.forEach((m, i) => {
           overlays.push(new kakao.maps.CustomOverlay({ map, position: points[i], content: markerElement(m.type), yAnchor: 0.5 }))
         })
@@ -126,6 +150,7 @@ export default function KakaoMap({ height = 236, markers = [], route, walk, call
 
     return () => {
       cancelled = true
+      mapRef.current = null
       overlays.forEach((o) => o.setMap(null))
     }
     // 지도는 처음 한 번만 그린다 (예시 데이터 고정)
@@ -137,6 +162,11 @@ export default function KakaoMap({ height = 236, markers = [], route, walk, call
       {mode !== 'fallback' && <div ref={containerRef} className="map__canvas" />}
       {mode === 'fallback' && <FallbackMap height={height} markers={markers} callout={callout} labels={labels} route={!!route} />}
       {mode === 'fallback' && <span className="map__badge t-caption c-secondary" title="VITE_KAKAO_MAP_KEY를 설정하면 실제 카카오맵이 보여요">지도 미리보기</span>}
+      {centerPin && (
+        <span className="map__center-pin" aria-hidden="true">
+          <Marker type="home" />
+        </span>
+      )}
       {children}
     </div>
   )

@@ -545,6 +545,8 @@
 .map__canvas { position: absolute; inset: 0; }
 .map__fallback { position: absolute; inset: 0; width: 100%; height: 100%; }
 .map__overlay { position: absolute; inset: 0; pointer-events: none; }
+/* 위치 고르기: 지도 가운데 고정 핀 (지도를 움직여 맞춘다) */
+.map__center-pin { position: absolute; left: 50%; top: 50%; z-index: 2; transform: translate(-50%, -50%); pointer-events: none; }
 .map__overlay > * { pointer-events: auto; }
 .map__badge {
   position: absolute;
