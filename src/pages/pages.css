@@ -241,3 +241,7 @@
 .screens-row:last-child { border-bottom: 0; }
 .screens-row > .t-body-m { flex: 1; }
 .screens-row__no { width: 24px; }
+
+@media (max-width: 359px) {
+  .home-header { padding: 8px 16px; }
+}

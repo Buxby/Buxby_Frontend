@@ -19,6 +19,8 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
+/* 화면이 낮으면 카드가 눌려 잘리지 않고 스크롤되도록 내용물은 줄어들지 않게 한다 (.spacer는 아래에서 다시 늘어나게 둠) */
+.screen__content > * { flex-shrink: 0; }
 
 .screen__footer {
   display: flex;
@@ -410,13 +412,15 @@
 /* ===== PrepRow / Stepper ===== */
 .prep-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  gap: 8px 16px;
   padding: 14px 20px;
   background: var(--bg-surface);
 }
-.prep-row__text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.stepper { display: inline-flex; align-items: center; gap: 8px; }
+/* 이름 칸이 120px보다 좁아지면 −/분/+ 조절을 다음 줄로 내린다 (좁은 화면에서 글자가 세로로 쪼개지지 않게) */
+.prep-row__text { flex: 1 1 120px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stepper { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
 .stepper__btn {
   display: inline-flex;
   align-items: center;
@@ -586,4 +590,17 @@
   background: var(--bg-surface);
   box-shadow: var(--shadow-card);
   white-space: nowrap;
+}
+
+/* ===== 좁은 화면 (iPhone SE·갤럭시 폴드 접은 화면 등 360px 미만) ===== */
+@media (max-width: 359px) {
+  .screen__content { padding-left: 16px; padding-right: 16px; }
+  .screen__footer { padding-left: 16px; padding-right: 16px; }
+  .topbar--large { padding: 0 16px; }
+  .sheet__header { padding-left: 16px; padding-right: 16px; }
+  .sheet__body { padding: 0 16px; }
+  .card--padded { padding: 16px; }
+  .prep-row { padding: 14px 16px; }
+  .t-display-time { font-size: 60px; line-height: 72px; }
+  .t-display-l { font-size: 28px; line-height: 36px; }
 }
