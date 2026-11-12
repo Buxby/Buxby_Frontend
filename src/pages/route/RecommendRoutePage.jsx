@@ -7,6 +7,8 @@ import { AdBanner, Badge, Card, IconTile, Notice, TimeRange } from '../../compon
 import KakaoMap from '../../components/KakaoMap'
 import { ALARM, PLACES, RECOMMEND, RECOMMEND_SOON, URGENT_MINUTES } from '../../data/mock'
 import { loadRealtime } from '../../lib/busApproach'
+import { snoozeLimitAt } from '../../lib/snooze'
+import { clockLabel } from '../../lib/time'
 import { useAppState } from '../../store/context'
 
 const ROUTE_PATH = [
@@ -229,7 +231,7 @@ export default function RecommendRoutePage() {
               <BusNow data={lastInfo} sub={lastInfo.stop} atSuffix=" 예정" />
             </Card>
           )}
-          <Notice>안전 알람 {live ? state.settings.snoozeLimit : ALARM.snoozeLimit}는 통신과 관계없이 그대로 울려요.</Notice>
+          <Notice>안전 알람 {live && state.plan ? clockLabel(snoozeLimitAt(state.plan, state.settings)) : `오전 ${ALARM.snoozeLimit}`}는 통신과 관계없이 그대로 울려요.</Notice>
           <div className="spacer" />
           <AdBanner />
         </Content>
