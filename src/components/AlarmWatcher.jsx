@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { getBusApproach } from '../api/transit'
 import { catchableArrival, remainingSeconds, shouldDepart, stopsLabel } from '../lib/busApproach'
+import { activeSnooze, snoozeLimitAt } from '../lib/snooze'
 import { useAppState } from '../store/context'
 
 const TICK_MS = 15000
@@ -47,16 +48,26 @@ export default function AlarmWatcher() {
       if (pathname !== path) navigate(path)
     }
 
+    // 기상 알람: 미뤘으면 미룬 시각에 다시 울리고, 끄지 않은 채 미루기 상한이 되면 안전 알람을 한 번 더 울린다
     const checkWake = (now, current) => {
-      const wake = new Date(current.plan.wakeTime).getTime()
-      if (current.alarmFired?.wake === reservationId) return
-      if (now >= wake && now < wake + minutes(GRACE_MIN)) {
-        fire('wake', '/alarm/wake', '일어날 시간이에요!', `${current.plan.bus} 타러 갈 준비를 시작하세요.`)
+      const fired = current.alarmFired ?? {}
+      const snooze = activeSnooze(current)
+      const target = new Date(snooze?.until ?? current.plan.wakeTime).getTime()
+      if (fired.wake !== reservationId) {
+        if (now >= target && now < target + minutes(GRACE_MIN)) {
+          fire('wake', '/alarm/wake', '일어날 시간이에요!', `${current.plan.bus} 타러 갈 준비를 시작하세요.`)
+        }
+        return
+      }
+      if (!current.settings.safetyAlarm || fired.dismissed === reservationId || fired.safety === reservationId) return
+      const limit = snoozeLimitAt(current.plan, current.settings).getTime()
+      if (target < limit && now >= limit && now < limit + minutes(GRACE_MIN)) {
+        fire('safety', '/alarm/wake', '아직 알람을 끄지 않았어요', '미루기 상한 시각이에요. 지금 일어나야 버스를 탈 수 있어요.')
       }
     }
 
     const checkDepart = async (now, current) => {
-      if (current.alarmFired?.depart === reservationId) return
+      if (!current.settings.departNotify || current.alarmFired?.depart === reservationId) return
       const leave = new Date(current.plan.leaveHomeTime).getTime()
       if (now < leave - minutes(LOOKAHEAD_MIN) || now >= leave + minutes(GRACE_MIN)) return
 
