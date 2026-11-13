@@ -4,7 +4,11 @@ import { ArrowRight, BusFront, Check, RefreshCw } from 'lucide-react'
 import { Content, Footer, Screen, TopBar } from '../../components/layout'
 import { Button } from '../../components/controls'
 import { Badge, IconTile, Notice } from '../../components/display'
-import { searchRoutes, collectBusCongestion } from '../../api/transit'
+import {
+  searchRoutes,
+  collectBusCongestion,
+  getSubwayArrivals,
+} from '../../api/transit'
 import { toRouteOptions } from '../../lib/routes'
 import { ROUTE_OPTIONS } from '../../data/mock'
 import { formatArrival, useAppState } from '../../store/context'
@@ -114,20 +118,46 @@ export default function RouteSelectPage() {
   const selected = options?.find((o) => o.id === picked) ?? options?.find((o) => o.recommended) ?? options?.[0]
 
   
+  
   const confirm = async () => {
     if (!selected || collecting) return
 
     setCollecting(true)
 
     let congestionState = null
+    let subwayArrivalState = null
+
+    // =====================================
+    // 1. 버스 노선 ID 추출
+    // =====================================
 
     const busRouteIds = live
-      ? [...new Set(
-          (selected.busRouteIds ?? [])
-            .filter(Boolean)
-            .map((id) => String(id).trim())
-        )]
+      ? [
+          ...new Set(
+            (selected.busRouteIds ?? [])
+              .filter(Boolean)
+              .map((id) => String(id).trim())
+          ),
+        ]
       : []
+
+    // =====================================
+    // 2. 지하철 승차역 추출
+    // =====================================
+
+    const subwayStationNames = live
+      ? [
+          ...new Set(
+            (selected.subwayStationNames ?? [])
+              .map((name) => String(name).trim())
+              .filter(Boolean)
+          ),
+        ]
+      : []
+
+    // =====================================
+    // 3. 버스 혼잡도 수집
+    // =====================================
 
     try {
       if (busRouteIds.length > 0) {
@@ -141,7 +171,6 @@ export default function RouteSelectPage() {
           failedCount: response.failedCount,
           collectedAt: new Date().toISOString(),
 
-          // 노선별 차량 정보
           routes: (response.results ?? []).map((route) => ({
             busRouteId: route.busRouteId,
             status: route.status,
@@ -165,16 +194,123 @@ export default function RouteSelectPage() {
       }
     }
 
-    // 경로 및 혼잡도 결과를 함께 저장
+    // =====================================
+    // 4. 지하철 실시간 도착정보 조회
+    // =====================================
+
+    try {
+      if (subwayStationNames.length > 0) {
+
+        // 각 승차역의 도착정보를 개별 조회
+        const stationResults = await Promise.all(
+          subwayStationNames.map(async (stationName) => {
+
+            try {
+              const response = await getSubwayArrivals(stationName)
+
+              return {
+                stationName,
+                status: response.status ?? 'UNKNOWN',
+                count: response.count ?? response.arrivals?.length ?? 0,
+                fetchedAt: response.fetchedAt ?? null,
+                arrivals: response.arrivals ?? [],
+                message: null,
+              }
+
+            } catch (err) {
+              console.warn(
+                `[지하철 도착정보 조회 실패: ${stationName}]`,
+                err.message
+              )
+
+              return {
+                stationName,
+                status: 'REQUEST_FAILED',
+                count: 0,
+                fetchedAt: null,
+                arrivals: [],
+                message: err.message,
+              }
+            }
+          })
+        )
+
+        // 역별 조회 결과 집계
+        const successCount = stationResults.filter(
+          (station) => station.status === 'SUCCESS'
+        ).length
+
+        const noDataCount = stationResults.filter(
+          (station) => station.status === 'NO_DATA'
+        ).length
+
+        const failedCount = stationResults.filter(
+          (station) => station.status === 'REQUEST_FAILED'
+        ).length
+
+        let status = 'SUCCESS'
+
+        if (failedCount > 0) {
+          status = successCount > 0 || noDataCount > 0
+            ? 'PARTIAL_SUCCESS'
+            : 'REQUEST_FAILED'
+        } else if (successCount === 0) {
+          status = 'NO_DATA'
+        }
+
+        subwayArrivalState = {
+          status,
+          requestedCount: subwayStationNames.length,
+          successCount,
+          noDataCount,
+          failedCount,
+          collectedAt: new Date().toISOString(),
+
+          stations: stationResults,
+        }
+
+        console.log(
+          '[지하철 실시간 도착정보]',
+          subwayArrivalState
+        )
+      }
+    } catch (err) {
+      console.warn('[지하철 정보 처리 실패]', err.message)
+
+      subwayArrivalState = {
+        status: 'REQUEST_FAILED',
+        requestedCount: subwayStationNames.length,
+        successCount: 0,
+        noDataCount: 0,
+        failedCount: subwayStationNames.length,
+        collectedAt: new Date().toISOString(),
+        stations: [],
+      }
+    }
+
+    // =====================================
+    // 5. 경로 및 실시간 정보 저장
+    // =====================================
+
     update({
       route: selected.no,
       routeDetail: live ? selected : null,
+
+      // 기존 버스 정보
       busCongestion: congestionState,
+
+      // 신규 지하철 정보
+      subwayArrivals: subwayArrivalState,
     })
+
+    console.log('[선택 경로]', selected.name)
+    console.log('[저장된 버스 혼잡도]', congestionState)
+    console.log('[저장된 지하철 도착정보]', subwayArrivalState)
 
     setCollecting(false)
     navigate('/home')
   }
+
 
 
   return (
@@ -238,7 +374,7 @@ export default function RouteSelectPage() {
           onClick={confirm}
         >
           {collecting
-            ? '버스 혼잡도 확인 중...'
+            ? '교통정보 확인 중...'
             : selected
               ? `${selected.name}으로 설정`
               : '노선을 선택하세요'}

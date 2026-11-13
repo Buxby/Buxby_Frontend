@@ -14,6 +14,26 @@ export function searchRoutes(origin, destination) {
   return request('/api/routes/search', { query: coordinates(origin, destination) })
 }
 
+
+ // 지하철역 실시간 도착정보 조회
+export function getSubwayArrivals(stationName) {
+  const normalizedStationName = String(stationName ?? '').trim()
+
+  // 역 이름이 없으면 API 호출하지 않음
+  if (!normalizedStationName) {
+    return Promise.reject(
+      new Error('지하철역 이름이 입력되지 않았어요.')
+    )
+  }
+
+  return request('/api/seoul/subway/arrivals', {
+    query: {
+      stationName: normalizedStationName,
+    },
+  })
+}
+
+
 // 선택한 노선의 서울시 실시간 도착 정보
 export function matchBusArrivals(origin, destination, option) {
   const query = { ...coordinates(origin, destination), stationName: option.stop }
