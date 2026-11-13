@@ -13,6 +13,7 @@ const DEFAULT_STATE = {
   route: null,
   routeDetail: null, // 선택한 경로 (ODsay 응답 변환값)
   routeOptions: null, // 현재 출발지·목적지의 경로 목록
+  busCongestion: null, // 선택한 경로의 실시간 혼잡도 정보
   lastRealtime: null, // 마지막으로 받은 실시간 도착 정보
   plan: null, // 서버에 저장한 알람 계획
   wakeOffAt: null, // 기상 알람을 끈 시각 (준비 시간 기록용)
@@ -45,7 +46,18 @@ function loadState() {
     // 예전 버전의 미루기 상한(오전 6:45 같은 고정 시각)은 분 단위 설정으로 바뀌어 버린다
     const settings = { ...parsed.settings }
     delete settings.snoozeLimit
-    return { ...DEFAULT_STATE, ...parsed, settings: { ...DEFAULT_STATE.settings, ...settings } }
+    return {
+      ...DEFAULT_STATE,
+      ...parsed,
+
+      // 새로고침하면 실시간 혼잡도 초기화
+      busCongestion: null,
+
+      settings: {
+        ...DEFAULT_STATE.settings,
+        ...settings,
+      },
+    }
   } catch {
     return DEFAULT_STATE
   }
@@ -57,9 +69,18 @@ export function AppStateProvider({ children }) {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      // 실시간 혼잡도는 localStorage에 저장하지 않음
+      const persistedState = { ...state }
+
+      delete persistedState.busCongestion
+
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(persistedState)
+      )
+
     } catch {
-      // 저장소를 쓸 수 없는 환경(사생활 보호 모드 등)에서는 메모리 상태만 유지
+      // 저장소를 쓸 수 없는 환경에서는 메모리 상태만 유지
     }
   }, [state])
 

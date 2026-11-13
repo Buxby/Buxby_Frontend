@@ -28,3 +28,41 @@ export function getBusApproach(approach) {
     query: { stopId, stopName, stopLat, stopLng, routeIds: routeIds.join(','), busNos: busNos.join(',') },
   })
 }
+
+
+/**
+ * 선택한 경로에 포함된 버스 노선들의 혼잡도 수집 및 DB 저장
+ *
+ * @param {string[]} busRouteIds 버스 노선 ID 목록
+ */
+export function collectBusCongestion(busRouteIds) {
+
+  // 중복 제거 및 빈 값 제거
+  const uniqueRouteIds = [
+    ...new Set(
+      (busRouteIds ?? [])
+        .map((id) => String(id).trim())
+        .filter(Boolean)
+    ),
+  ]
+
+  // 버스 노선이 없으면 API 호출하지 않음
+  if (uniqueRouteIds.length === 0) {
+    return Promise.resolve({
+      status: 'SKIPPED',
+      requestedCount: 0,
+      successCount: 0,
+      failedCount: 0,
+    })
+  }
+
+  // 백엔드 Batch API 호출
+  return request('/api/seoul/bus/positions/collect-batch', {
+    method: 'POST',
+
+    body: {
+      busRouteIds: uniqueRouteIds,
+    },
+  })
+}
+

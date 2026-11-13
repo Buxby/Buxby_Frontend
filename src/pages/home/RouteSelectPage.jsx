@@ -4,10 +4,11 @@ import { ArrowRight, BusFront, Check, RefreshCw } from 'lucide-react'
 import { Content, Footer, Screen, TopBar } from '../../components/layout'
 import { Button } from '../../components/controls'
 import { Badge, IconTile, Notice } from '../../components/display'
-import { searchRoutes } from '../../api/transit'
+import { searchRoutes, collectBusCongestion } from '../../api/transit'
 import { toRouteOptions } from '../../lib/routes'
 import { ROUTE_OPTIONS } from '../../data/mock'
 import { formatArrival, useAppState } from '../../store/context'
+
 
 const PREVIEW_OPTIONS = ROUTE_OPTIONS.map((r) => ({ ...r, id: r.no, name: `${r.no}번`, walkToStop: r.walk }))
 
@@ -21,6 +22,8 @@ export default function RouteSelectPage() {
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [picked, setPicked] = useState(state.routeDetail?.id ?? null)
+  // 버스 혼잡도 수집 중 여부
+  const [collecting, setCollecting] = useState(false)
 
   useEffect(() => {
     if (!live) return undefined
@@ -31,6 +34,27 @@ export default function RouteSelectPage() {
         const all = toRouteOptions(json, origin.name, destination.name)
         setOptions(all.filter((o) => o.no))
         update({ routeOptions: all })
+        // 개발 중 버스 구간 추출 결과 확인
+        console.table(
+          all.flatMap((option) =>
+            option.busSegments.map((segment) => ({
+              경로: option.name,
+              구간순서: segment.sectionIndex + 1,
+              버스번호: segment.busNos.join(', '),
+              노선ID: segment.busRouteIds.join(', '),
+              승차정류장: segment.boardingStationName,
+              하차정류장: segment.alightingStationName,
+            }))
+          )
+        )
+
+        console.log(
+          '[경로별 전체 버스 노선 ID]',
+          all.map((option) => ({
+            name: option.name,
+            busRouteIds: option.busRouteIds,
+          }))
+        )
       })
       .catch((err) => {
         if (!cancelled) setError(err.message)
@@ -48,10 +72,69 @@ export default function RouteSelectPage() {
 
   const selected = options?.find((o) => o.id === picked) ?? options?.find((o) => o.recommended) ?? options?.[0]
 
-  const confirm = () => {
-    update({ route: selected.no, routeDetail: live ? selected : null })
+  
+  const confirm = async () => {
+    if (!selected || collecting) return
+
+    setCollecting(true)
+
+    let congestionState = null
+
+    const busRouteIds = live
+      ? [...new Set(
+          (selected.busRouteIds ?? [])
+            .filter(Boolean)
+            .map((id) => String(id).trim())
+        )]
+      : []
+
+    try {
+      if (busRouteIds.length > 0) {
+        const response = await collectBusCongestion(busRouteIds)
+
+        congestionState = {
+          status: response.status,
+          requestedCount: response.requestedCount,
+          successCount: response.successCount,
+          noDataCount: response.noDataCount ?? 0,
+          failedCount: response.failedCount,
+          collectedAt: new Date().toISOString(),
+
+          // 노선별 차량 정보
+          routes: (response.results ?? []).map((route) => ({
+            busRouteId: route.busRouteId,
+            status: route.status,
+            fetchedCount: route.fetchedCount ?? 0,
+            savedCount: route.savedCount ?? 0,
+            collectedAt: route.collectedAt ?? null,
+            vehicles: route.vehicles ?? [],
+            message: route.message ?? null,
+          })),
+        }
+
+        console.log('[혼잡도 수집 결과]', congestionState)
+      }
+    } catch (err) {
+      console.warn('[혼잡도 수집 실패]', err.message)
+
+      congestionState = {
+        status: 'REQUEST_FAILED',
+        message: err.message,
+        routes: [],
+      }
+    }
+
+    // 경로 및 혼잡도 결과를 함께 저장
+    update({
+      route: selected.no,
+      routeDetail: live ? selected : null,
+      busCongestion: congestionState,
+    })
+
+    setCollecting(false)
     navigate('/home')
   }
+
 
   return (
     <Screen>
@@ -109,8 +192,15 @@ export default function RouteSelectPage() {
         })}
       </Content>
       <Footer>
-        <Button disabled={!selected} onClick={confirm}>
-          {selected ? `${selected.name}으로 설정` : '노선을 선택하세요'}
+        <Button
+          disabled={!selected || collecting}
+          onClick={confirm}
+        >
+          {collecting
+            ? '버스 혼잡도 확인 중...'
+            : selected
+              ? `${selected.name}으로 설정`
+              : '노선을 선택하세요'}
         </Button>
       </Footer>
     </Screen>
