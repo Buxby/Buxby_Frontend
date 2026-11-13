@@ -140,6 +140,94 @@ function extractBusSegments(sections) {
 
 
 // =====================================
+// 모든 지하철 구간 정보 추출
+// =====================================
+
+function extractSubwaySegments(sections) {
+
+  return sections.flatMap((section, sectionIndex) => {
+
+    // 지하철 구간이 아니면 제외
+    if (section.trafficType !== SUBWAY) {
+      return []
+    }
+
+    // 지하철 노선 정보
+    const lanes = (section.lane ?? []).map((lane) => ({
+      name: lane.name ?? '지하철',
+      subwayCode: lane.subwayCode ?? null,
+      subwayCityCode: lane.subwayCityCode ?? null,
+    }))
+
+    // 지하철 구간에 포함된 역 정보
+    const stations = (section.passStopList?.stations ?? [])
+      .map((station, index) => ({
+        order: station.index ?? index,
+        stationName: station.stationName ?? station.name ?? '',
+        stationId: station.stationID ?? station.stationId ?? null,
+        latitude: toNumberOrNull(station.y),
+        longitude: toNumberOrNull(station.x),
+      }))
+      .filter((station) => station.stationName)
+
+    // 승차역과 하차역을 포함한 전체 역 이름
+    const stationNames = [
+      section.startName,
+      ...stations.map((station) => station.stationName),
+      section.endName,
+    ].filter(Boolean)
+
+    // 역 이름 중복 제거
+    const uniqueStationNames = [
+      ...new Set(stationNames),
+    ]
+
+    // 노선 이름 중복 제거
+    const lineNames = [
+      ...new Set(
+        lanes
+          .map((lane) => lane.name)
+          .filter(Boolean)
+      ),
+    ]
+
+    return [{
+      // 전체 경로에서 지하철 구간의 순서
+      sectionIndex,
+
+      // 승차 및 하차역
+      boardingStationName: section.startName ?? '',
+      alightingStationName: section.endName ?? '',
+
+      // 승하차역 좌표
+      boardingLatitude: toNumberOrNull(section.startY),
+      boardingLongitude: toNumberOrNull(section.startX),
+
+      alightingLatitude: toNumberOrNull(section.endY),
+      alightingLongitude: toNumberOrNull(section.endX),
+
+      // 지하철 노선 정보
+      lineNames,
+      lanes,
+
+      // 이동 정보
+      sectionTime: section.sectionTime ?? null,
+      stationCount: section.stationCount ?? null,
+
+      // 해당 구간의 역 목록
+      stationNames: uniqueStationNames,
+      stations,
+
+      // ODsay 원본 방향 정보
+      way: section.way ?? null,
+      wayCode: section.wayCode ?? null,
+    }]
+  })
+}
+
+
+
+// =====================================
 // 경로 상세 단계 생성
 // =====================================
 
@@ -224,6 +312,27 @@ function toOption(path, originName, destinationName) {
 
   // 모든 버스 구간 추출
   const busSegments = extractBusSegments(sections)
+
+    // 모든 지하철 구간 추출
+  const subwaySegments = extractSubwaySegments(sections)
+
+  // 전체 경로의 지하철 승차역
+  const subwayStationNames = [
+    ...new Set(
+      subwaySegments
+        .map((segment) => segment.boardingStationName)
+        .filter(Boolean)
+    ),
+  ]
+
+  // 전체 경로의 지하철 노선명
+  const allSubwayLines = [
+    ...new Set(
+      subwaySegments.flatMap(
+        (segment) => segment.lineNames
+      )
+    ),
+  ]
 
   // 전체 경로의 고유 버스 노선 ID
   const busRouteIds = [
@@ -326,6 +435,18 @@ function toOption(path, originName, destinationName) {
 
     // 경로에 포함된 모든 버스 번호
     allBusNos,
+
+    // =====================================
+    // 신규: 전체 지하철 구간 정보
+    // =====================================
+
+    subwaySegments,
+
+    // 경로에 포함된 모든 지하철 승차역
+    subwayStationNames,
+
+    // 경로에 포함된 전체 지하철 노선명
+    allSubwayLines,
 
     // =====================================
     // 기존 출발 알람 기능 유지

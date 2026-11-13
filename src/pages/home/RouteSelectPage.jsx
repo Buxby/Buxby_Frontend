@@ -64,6 +64,31 @@ export default function RouteSelectPage() {
     }
   }, [live, origin, destination, attempt, update])
 
+  // 개발 중 지하철 구간 추출 결과 확인
+  console.table(
+    all.flatMap((option) =>
+      (option.subwaySegments ?? []).map((segment) => ({
+        경로: option.name,
+        구간순서: segment.sectionIndex + 1,
+        노선: segment.lineNames.join(', '),
+        승차역: segment.boardingStationName,
+        하차역: segment.alightingStationName,
+        이동시간: segment.sectionTime,
+        정거장수: segment.stationCount,
+        전체역목록: segment.stationNames.join(' → '),
+      }))
+    )
+  )
+
+  console.log(
+    '[경로별 전체 지하철 승차역]',
+    all.map((option) => ({
+      name: option.name,
+      subwayStationNames: option.subwayStationNames,
+      allSubwayLines: option.allSubwayLines,
+    }))
+  )
+
   const retry = () => {
     setError('')
     setOptions(null)
