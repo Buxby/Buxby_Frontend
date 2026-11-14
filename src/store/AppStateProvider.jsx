@@ -14,6 +14,7 @@ const DEFAULT_STATE = {
   routeDetail: null, // 선택한 경로 (ODsay 응답 변환값)
   routeOptions: null, // 현재 출발지·목적지의 경로 목록
   busCongestion: null, // 선택한 경로의 실시간 혼잡도 정보
+  subwayArrivals: null, // 선택한 경로의 지하철 실시간 도착정보
   lastRealtime: null, // 마지막으로 받은 실시간 도착 정보
   plan: null, // 서버에 저장한 알람 계획
   wakeOffAt: null, // 기상 알람을 끈 시각 (준비 시간 기록용)
@@ -52,6 +53,7 @@ function loadState() {
 
       // 새로고침하면 실시간 혼잡도 초기화
       busCongestion: null,
+      subwayArrivals: null,
 
       settings: {
         ...DEFAULT_STATE.settings,
@@ -69,10 +71,11 @@ export function AppStateProvider({ children }) {
 
   useEffect(() => {
     try {
-      // 실시간 혼잡도는 localStorage에 저장하지 않음
+      // 실시간 교통정보는 localStorage에 저장하지 않음
       const persistedState = { ...state }
 
       delete persistedState.busCongestion
+      delete persistedState.subwayArrivals
 
       window.localStorage.setItem(
         STORAGE_KEY,

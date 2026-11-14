@@ -303,6 +303,251 @@ function BusCongestionSection({ congestion, detail }) {
 }
 
 
+// =====================================
+// 지하철 실시간 도착정보 표시
+// =====================================
+
+function SubwayArrivalSection({ subwayArrivals, detail }) {
+
+  const subwaySegments = detail?.subwaySegments ?? []
+  const stations = subwayArrivals?.stations ?? []
+
+  // 지하철 구간이 없는 경로는 표시하지 않음
+  if (subwaySegments.length === 0) {
+    return null
+  }
+
+  // 역 이름 중복 제거
+  const stationNames = [
+    ...new Set(
+      (detail?.subwayStationNames ?? []).filter(Boolean)
+    ),
+  ]
+
+  // 역 이름으로 조회 결과 검색
+  const stationMap = new Map(
+    stations.map((station) => [
+      station.stationName,
+      station,
+    ])
+  )
+
+  return (
+    <section
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid #E5E7EB',
+        borderRadius: '16px',
+        padding: '16px',
+      }}
+    >
+      <div style={{ marginBottom: '14px' }}>
+        <h3 className="t-body-l-bold">
+          실시간 지하철 도착정보
+        </h3>
+
+        <p className="t-caption c-secondary">
+          선택한 경로의 지하철 승차역별 열차 정보예요.
+        </p>
+      </div>
+
+      {!subwayArrivals && (
+        <p className="t-body-s c-secondary">
+          아직 지하철 도착정보를 조회하지 않았어요.
+        </p>
+      )}
+
+      {subwayArrivals?.status === 'REQUEST_FAILED' && (
+        <p className="t-body-s c-secondary">
+          지하철 도착정보를 가져오지 못했어요.
+          잠시 후 다시 시도해 주세요.
+        </p>
+      )}
+
+      {subwayArrivals?.status === 'NO_DATA' && (
+        <p className="t-body-s c-secondary">
+          현재 제공되는 지하철 도착정보가 없어요.
+        </p>
+      )}
+
+      {stationNames.map((stationName) => {
+
+        const station = stationMap.get(stationName)
+
+        // 해당 승차역에 포함된 노선 정보
+        const lines = subwaySegments
+          .filter(
+            (segment) =>
+              segment.boardingStationName === stationName
+          )
+          .flatMap((segment) => segment.lineNames ?? [])
+
+        const uniqueLines = [...new Set(lines)]
+
+        const arrivals = station?.arrivals ?? []
+
+        return (
+          <div
+            key={stationName}
+            style={{
+              marginTop: '14px',
+              paddingTop: '14px',
+              borderTop: '1px solid #E5E7EB',
+            }}
+          >
+            {/* 승차역 및 노선 */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '10px',
+                gap: '8px',
+              }}
+            >
+              <div>
+                <strong className="t-body-m-bold">
+                  {stationName}
+                </strong>
+
+                <div className="t-caption c-secondary">
+                  {uniqueLines.join(' · ')}
+                </div>
+              </div>
+
+              <span className="t-caption c-secondary">
+                {arrivals.length}개 열차
+              </span>
+            </div>
+
+            {/* 조회 실패 */}
+            {station?.status === 'REQUEST_FAILED' && (
+              <p className="t-body-s c-secondary">
+                이 역의 도착정보를 가져오지 못했어요.
+              </p>
+            )}
+
+            {/* 데이터 없음 */}
+            {station?.status === 'NO_DATA' && (
+              <p className="t-body-s c-secondary">
+                현재 운행 정보가 없습니다.
+              </p>
+            )}
+
+            {/* 조회 결과가 비어 있음 */}
+            {station?.status === 'SUCCESS' &&
+              arrivals.length === 0 && (
+                <p className="t-body-s c-secondary">
+                  현재 표시할 열차가 없습니다.
+                </p>
+              )}
+
+            {/* 열차별 도착정보 */}
+            {arrivals.map((train, index) => (
+
+              <div
+                key={`${train.trainNumber || 'train'}-${index}`}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '12px 10px',
+                  marginTop: '8px',
+                  background: '#F8FAFC',
+                  borderRadius: '12px',
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div className="t-body-s-medium">
+                    {train.lineName || '지하철'}
+                    {' · '}
+                    {train.updnLine || ''}
+                  </div>
+
+                  <div
+                    className="t-caption c-secondary"
+                    style={{ marginTop: '3px' }}
+                  >
+                    {train.trainLineNm
+                      || `${train.destinationStation || '행'}`}
+                  </div>
+
+                  {train.arrivalDetailMessage && (
+                    <div
+                      className="t-caption c-secondary"
+                      style={{ marginTop: '3px' }}
+                    >
+                      현재 위치: {train.arrivalDetailMessage}
+                    </div>
+                  )}
+
+                  {train.arrivalCodeLabel && (
+                    <div
+                      className="t-caption c-secondary"
+                      style={{ marginTop: '3px' }}
+                    >
+                      {train.arrivalCodeLabel}
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    textAlign: 'right',
+                    flexShrink: 0,
+                    maxWidth: '120px',
+                  }}
+                >
+                  <strong
+                    style={{
+                      fontSize: '14px',
+                      color: '#2563EB',
+                    }}
+                  >
+                    {train.arrivalMessage || '도착 정보 확인 중'}
+                  </strong>
+
+                  {train.isLastTrain === '1' && (
+                    <div className="t-caption c-secondary">
+                      막차
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* 조회 시각 */}
+            {station?.fetchedAt && (
+              <p
+                className="t-caption c-secondary"
+                style={{
+                  marginTop: '8px',
+                  textAlign: 'right',
+                }}
+              >
+                조회 시각: {formatCollectedAt(station.fetchedAt)}
+              </p>
+            )}
+
+          </div>
+        )
+      })}
+
+      {subwayArrivals?.status === 'PARTIAL_SUCCESS' && (
+        <p
+          className="t-caption c-secondary"
+          style={{ marginTop: '12px' }}
+        >
+          일부 역의 도착정보만 정상적으로 조회되었어요.
+        </p>
+      )}
+
+    </section>
+  )
+}
+
+
 // C2 노선 상세 (타임라인)
 export default function RouteDetailPage() {
 
@@ -369,6 +614,11 @@ export default function RouteDetailPage() {
         {/* 신규: 실시간 버스 혼잡도 */}
         <BusCongestionSection
           congestion={state.busCongestion}
+          detail={detail}
+        />
+        {/* 신규: 실시간 지하철 도착정보 */}
+        <SubwayArrivalSection
+          subwayArrivals={state.subwayArrivals}
           detail={detail}
         />
 
