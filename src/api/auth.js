@@ -71,9 +71,12 @@ export async function logout() {
   }
 }
 
-// 소셜 로그인 시작 (배포에서는 Vercel이 /oauth2를 백엔드로 넘기므로 같은 도메인을 쓴다)
-const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? 'http://localhost:8080' : '')
+// 소셜 로그인 시작
+// 개발 환경은 localhost 백엔드,
+// 배포 환경은 Vercel 프록시를 사용한다.
+const BACKEND_URL = import.meta.env.DEV
+  ? 'http://localhost:8080'
+  : ''
 
 export function socialLogin(provider) {
 
@@ -83,6 +86,8 @@ export function socialLogin(provider) {
     throw new Error('지원하지 않는 로그인 방식입니다.')
   }
 
-  window.location.href =
+  const loginUrl =
     `${BACKEND_URL}/oauth2/authorization/${provider}`
+
+  window.location.assign(loginUrl)
 }

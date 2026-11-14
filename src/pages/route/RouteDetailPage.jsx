@@ -1,4 +1,5 @@
 
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Content, Footer, Screen, TopBar } from '../../components/layout'
 import { Button } from '../../components/controls'
@@ -6,6 +7,7 @@ import { Badge, RouteStep } from '../../components/display'
 import { RECOMMEND, ROUTE_STEPS } from '../../data/mock'
 import { alarmView } from '../../lib/time'
 import { useAppState } from '../../store/context'
+import { getSubwayArrivals } from '../../api/transit'
 
 // 혼잡도별 표시 색상
 function getCongestionStyle(label) {
@@ -59,6 +61,41 @@ function formatCollectedAt(value) {
   return date.toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
+  })
+}
+
+// ODsay 노선명과 서울시 API 노선명 비교를 위한 정규화
+function normalizeSubwayLineName(value) {
+  return String(value ?? '')
+    .replace(/^수도권\s*/, '')
+    .replace(/\s+/g, '')
+    .trim()
+}
+
+// 선택한 경로에 해당하는 지하철 열차만 필터링
+function filterSubwayArrivals(arrivals, lineNames) {
+
+  const targetLines = (lineNames ?? [])
+    .map(normalizeSubwayLineName)
+    .filter(Boolean)
+
+  if (targetLines.length === 0) {
+    return arrivals
+  }
+
+  return arrivals.filter((train) => {
+
+    const actualLine = normalizeSubwayLineName(
+      train.lineName
+    )
+
+    if (!actualLine) return false
+
+    return targetLines.some((targetLine) =>
+      actualLine === targetLine
+      || actualLine.includes(targetLine)
+      || targetLine.includes(actualLine)
+    )
   })
 }
 
@@ -307,24 +344,27 @@ function BusCongestionSection({ congestion, detail }) {
 // 지하철 실시간 도착정보 표시
 // =====================================
 
-function SubwayArrivalSection({ subwayArrivals, detail }) {
+function SubwayArrivalSection({
+  subwayArrivals,
+  detail,
+  onRefresh,
+  refreshing,
+}) {
 
   const subwaySegments = detail?.subwaySegments ?? []
-  const stations = subwayArrivals?.stations ?? []
 
-  // 지하철 구간이 없는 경로는 표시하지 않음
   if (subwaySegments.length === 0) {
     return null
   }
 
-  // 역 이름 중복 제거
   const stationNames = [
     ...new Set(
       (detail?.subwayStationNames ?? []).filter(Boolean)
     ),
   ]
 
-  // 역 이름으로 조회 결과 검색
+  const stations = subwayArrivals?.stations ?? []
+
   const stationMap = new Map(
     stations.map((station) => [
       station.stationName,
@@ -341,32 +381,52 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
         padding: '16px',
       }}
     >
-      <div style={{ marginBottom: '14px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '10px',
+          marginBottom: '8px',
+        }}
+      >
         <h3 className="t-body-l-bold">
           실시간 지하철 도착정보
         </h3>
 
-        <p className="t-caption c-secondary">
-          선택한 경로의 지하철 승차역별 열차 정보예요.
-        </p>
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={refreshing}
+          style={{
+            border: '1px solid #D1D5DB',
+            borderRadius: '8px',
+            padding: '7px 10px',
+            background: refreshing ? '#F1F5F9' : '#FFFFFF',
+            color: '#475569',
+            fontSize: '12px',
+            fontWeight: 600,
+            cursor: refreshing ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {refreshing ? '조회 중...' : '새로고침'}
+        </button>
       </div>
 
+      <p className="t-caption c-secondary">
+        선택한 경로에 포함된 노선의 열차만 표시해요.
+      </p>
+
+      <p
+        className="t-caption c-secondary"
+        style={{ marginTop: '5px' }}
+      >
+        자동 갱신: 3분마다
+      </p>
+
       {!subwayArrivals && (
-        <p className="t-body-s c-secondary">
+        <p className="t-body-s c-secondary" style={{ marginTop: '14px' }}>
           아직 지하철 도착정보를 조회하지 않았어요.
-        </p>
-      )}
-
-      {subwayArrivals?.status === 'REQUEST_FAILED' && (
-        <p className="t-body-s c-secondary">
-          지하철 도착정보를 가져오지 못했어요.
-          잠시 후 다시 시도해 주세요.
-        </p>
-      )}
-
-      {subwayArrivals?.status === 'NO_DATA' && (
-        <p className="t-body-s c-secondary">
-          현재 제공되는 지하철 도착정보가 없어요.
         </p>
       )}
 
@@ -374,17 +434,28 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
 
         const station = stationMap.get(stationName)
 
-        // 해당 승차역에 포함된 노선 정보
-        const lines = subwaySegments
-          .filter(
-            (segment) =>
-              segment.boardingStationName === stationName
-          )
-          .flatMap((segment) => segment.lineNames ?? [])
+        // 해당 승차역에서 이용할 지하철 구간
+        const matchingSegments = subwaySegments.filter(
+          (segment) =>
+            segment.boardingStationName === stationName
+        )
 
-        const uniqueLines = [...new Set(lines)]
+        // 해당 승차역에서 이용할 노선명
+        const lineNames = [
+          ...new Set(
+            matchingSegments.flatMap(
+              (segment) => segment.lineNames ?? []
+            )
+          ),
+        ]
 
-        const arrivals = station?.arrivals ?? []
+        // API 응답에서 경로에 해당하는 열차만 필터링
+        const rawArrivals = station?.arrivals ?? []
+
+        const arrivals = filterSubwayArrivals(
+          rawArrivals,
+          lineNames
+        )
 
         return (
           <div
@@ -395,14 +466,14 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
               borderTop: '1px solid #E5E7EB',
             }}
           >
-            {/* 승차역 및 노선 */}
+            {/* 승차역 */}
             <div
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '10px',
                 gap: '8px',
+                marginBottom: '10px',
               }}
             >
               <div>
@@ -411,7 +482,7 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
                 </strong>
 
                 <div className="t-caption c-secondary">
-                  {uniqueLines.join(' · ')}
+                  {lineNames.join(' · ')}
                 </div>
               </div>
 
@@ -423,22 +494,24 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
             {/* 조회 실패 */}
             {station?.status === 'REQUEST_FAILED' && (
               <p className="t-body-s c-secondary">
-                이 역의 도착정보를 가져오지 못했어요.
+                지하철 도착정보를 가져오지 못했어요.
+                잠시 후 다시 시도해 주세요.
               </p>
             )}
 
             {/* 데이터 없음 */}
             {station?.status === 'NO_DATA' && (
               <p className="t-body-s c-secondary">
-                현재 운행 정보가 없습니다.
+                현재 운행 중인 열차 정보가 없습니다.
               </p>
             )}
 
-            {/* 조회 결과가 비어 있음 */}
-            {station?.status === 'SUCCESS' &&
-              arrivals.length === 0 && (
+            {/* 노선에 해당하는 열차 없음 */}
+            {station?.status === 'SUCCESS'
+              && rawArrivals.length > 0
+              && arrivals.length === 0 && (
                 <p className="t-body-s c-secondary">
-                  현재 표시할 열차가 없습니다.
+                  현재 해당 노선의 도착정보가 없습니다.
                 </p>
               )}
 
@@ -459,37 +532,30 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
                 }}
               >
                 <div style={{ minWidth: 0, flex: 1 }}>
+
                   <div className="t-body-s-medium">
-                    {train.lineName || '지하철'}
+                    {train.lineName}
                     {' · '}
                     {train.updnLine || ''}
                   </div>
 
-                  <div
-                    className="t-caption c-secondary"
-                    style={{ marginTop: '3px' }}
-                  >
+                  <div className="t-caption c-secondary">
                     {train.trainLineNm
                       || `${train.destinationStation || '행'}`}
                   </div>
 
                   {train.arrivalDetailMessage && (
-                    <div
-                      className="t-caption c-secondary"
-                      style={{ marginTop: '3px' }}
-                    >
+                    <div className="t-caption c-secondary">
                       현재 위치: {train.arrivalDetailMessage}
                     </div>
                   )}
 
                   {train.arrivalCodeLabel && (
-                    <div
-                      className="t-caption c-secondary"
-                      style={{ marginTop: '3px' }}
-                    >
+                    <div className="t-caption c-secondary">
                       {train.arrivalCodeLabel}
                     </div>
                   )}
+
                 </div>
 
                 <div
@@ -517,6 +583,13 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
               </div>
             ))}
 
+            {/* 해당 역의 데이터가 없는 경우 */}
+            {!station && subwayArrivals && (
+              <p className="t-body-s c-secondary">
+                아직 이 역의 조회 결과가 없습니다.
+              </p>
+            )}
+
             {/* 조회 시각 */}
             {station?.fetchedAt && (
               <p
@@ -543,6 +616,15 @@ function SubwayArrivalSection({ subwayArrivals, detail }) {
         </p>
       )}
 
+      {subwayArrivals?.status === 'REQUEST_FAILED' && (
+        <p
+          className="t-caption c-secondary"
+          style={{ marginTop: '12px' }}
+        >
+          교통정보 서버에 연결할 수 없습니다.
+        </p>
+      )}
+
     </section>
   )
 }
@@ -553,9 +635,151 @@ export default function RouteDetailPage() {
 
   const navigate = useNavigate()
 
-  const { state } = useAppState()
+  const { state, update } = useAppState()
 
   const detail = state.routeDetail
+
+  // 지하철 도착정보 갱신 상태
+  const [refreshingSubway, setRefreshingSubway] = useState(false)
+
+  // 중복 API 호출 방지
+  const refreshingRef = useRef(false)
+
+  // 선택한 경로에 포함된 지하철 승차역
+  const subwayStationNames = useMemo(() => (
+    [
+      ...new Set(
+        (detail?.subwayStationNames ?? [])
+          .map((name) => String(name).trim())
+          .filter(Boolean)
+      ),
+    ]
+  ), [detail?.subwayStationNames])
+
+  // =====================================
+  // 지하철 도착정보 다시 조회
+  // =====================================
+
+  const refreshSubwayArrivals = useCallback(async () => {
+
+    if (
+      subwayStationNames.length === 0
+      || refreshingRef.current
+    ) {
+      return
+    }
+
+    refreshingRef.current = true
+    setRefreshingSubway(true)
+
+    try {
+
+      // 승차역별 도착정보 조회
+      const stationResults = await Promise.all(
+        subwayStationNames.map(async (stationName) => {
+
+          try {
+
+            const response = await getSubwayArrivals(stationName)
+
+            return {
+              stationName,
+              status: response.status ?? 'UNKNOWN',
+              count: response.count ?? response.arrivals?.length ?? 0,
+              fetchedAt: response.fetchedAt ?? null,
+              arrivals: response.arrivals ?? [],
+              message: null,
+            }
+
+          } catch (err) {
+
+            console.warn(
+              `[지하철 갱신 실패: ${stationName}]`,
+              err.message
+            )
+
+            return {
+              stationName,
+              status: 'REQUEST_FAILED',
+              count: 0,
+              fetchedAt: null,
+              arrivals: [],
+              message: err.message,
+            }
+          }
+        })
+      )
+
+      // 조회 결과 집계
+      const successCount = stationResults.filter(
+        (station) => station.status === 'SUCCESS'
+      ).length
+
+      const noDataCount = stationResults.filter(
+        (station) => station.status === 'NO_DATA'
+      ).length
+
+      const failedCount = stationResults.filter(
+        (station) => station.status === 'REQUEST_FAILED'
+      ).length
+
+      let status = 'SUCCESS'
+
+      if (failedCount > 0) {
+
+        status =
+          successCount > 0 || noDataCount > 0
+            ? 'PARTIAL_SUCCESS'
+            : 'REQUEST_FAILED'
+
+      } else if (successCount === 0) {
+
+        status = 'NO_DATA'
+      }
+
+      const result = {
+        status,
+        requestedCount: subwayStationNames.length,
+        successCount,
+        noDataCount,
+        failedCount,
+        collectedAt: new Date().toISOString(),
+        stations: stationResults,
+      }
+
+      update({
+        subwayArrivals: result,
+      })
+
+      console.log('[지하철 도착정보 갱신]', result)
+
+    } finally {
+
+      refreshingRef.current = false
+      setRefreshingSubway(false)
+    }
+
+  }, [subwayStationNames, update])
+
+  // =====================================
+  // 3분마다 지하철 도착정보 자동 갱신
+  // =====================================
+
+  useEffect(() => {
+
+    if (subwayStationNames.length === 0) {
+      return undefined
+    }
+
+    const intervalId = window.setInterval(() => {
+      refreshSubwayArrivals()
+    }, 180000)
+
+    return () => {
+      window.clearInterval(intervalId)
+    }
+
+  }, [refreshSubwayArrivals, subwayStationNames.length])
 
   const view = state.plan
     ? alarmView(state.plan)
@@ -620,6 +844,8 @@ export default function RouteDetailPage() {
         <SubwayArrivalSection
           subwayArrivals={state.subwayArrivals}
           detail={detail}
+          onRefresh={refreshSubwayArrivals}
+          refreshing={refreshingSubway}
         />
 
       </Content>
