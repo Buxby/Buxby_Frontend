@@ -27,7 +27,29 @@
 
 /* ===== B. 홈 ===== */
 .home-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 24px; flex-shrink: 0; }
-.home-header__actions { display: flex; align-items: center; gap: 4px; }
+/* 홈 AI 비서 플로팅 버튼: 아래 하단 버튼·탭 바로 위, 오른쪽에 떠 있다 */
+.ai-fab-anchor { position: relative; flex-shrink: 0; height: 0; z-index: 5; }
+.ai-fab {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 52px;
+  padding: 0 18px 0 16px;
+  border-radius: var(--radius-full);
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35), var(--shadow-card);
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+.ai-fab:active { transform: scale(0.96); background: var(--bg-brand-pressed); }
+/* 앱 로고: 이미지 모서리가 흰색이라 원본처럼 둥근 사각형으로 자른다 */
+.app-logo { display: block; flex-shrink: 0; border-radius: 22%; object-fit: cover; }
+.home-header__logo { width: 36px; height: 36px; }
+.start-illustration { display: block; width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-xl); object-fit: cover; }
 .hero { display: flex; align-items: flex-start; gap: 8px; }
 .hero__text { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .next-alarm {

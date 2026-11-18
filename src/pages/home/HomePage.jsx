@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { BellOff, BusFront, Briefcase, Clock, GraduationCap, MapPin, MessageCircle, RefreshCw, Settings, ShieldCheck, User } from 'lucide-react'
+import { BellOff, Bot, BusFront, Briefcase, Clock, GraduationCap, MapPin, RefreshCw, Settings, ShieldCheck, User } from 'lucide-react'
 import { BottomNav, BottomSheet, Content, Footer, Screen } from '../../components/layout'
 import { Button, Chip } from '../../components/controls'
 import { AdBanner, Badge, Card, Divider, IllustrationSlot, ListRow, Toast } from '../../components/display'
@@ -14,6 +14,7 @@ import { alarmView, clock, clockLabel } from '../../lib/time'
 import { activeSnooze, snoozeLimitAt } from '../../lib/snooze'
 import { useToast } from '../../lib/useToast'
 import ArrivalSheet from './ArrivalSheet'
+import logo from '../../assets/logo.jpg'
 
 const CATEGORIES = [
   { label: '수업', icon: GraduationCap },
@@ -24,15 +25,22 @@ const CATEGORIES = [
 function HomeHeader() {
   return (
     <div className="home-header">
-      <span className="t-title-s c-brand">버스비</span>
-      <span className="home-header__actions">
-        <Link to="/chat" className="icon-button" aria-label="AI 비서">
-          <MessageCircle size={24} color="var(--icon-default)" />
-        </Link>
-        <Link to="/alarm/settings" className="icon-button" aria-label="알람 설정">
-          <Settings size={24} color="var(--icon-default)" />
-        </Link>
-      </span>
+      <img src={logo} alt="버스비" className="app-logo home-header__logo" width={36} height={36} />
+      <Link to="/alarm/settings" className="icon-button" aria-label="알람 설정">
+        <Settings size={24} color="var(--icon-default)" />
+      </Link>
+    </div>
+  )
+}
+
+// 홈 우측 하단 AI 비서 플로팅 버튼. 바로 아래 영역(하단 버튼·탭) 위에 떠 있도록 높이 0인 자리에 붙인다
+function AiFab() {
+  return (
+    <div className="ai-fab-anchor">
+      <Link to="/chat" className="ai-fab" aria-label="AI 비서에게 물어보기">
+        <Bot size={22} aria-hidden="true" />
+        <span className="t-body-s-medium">AI 비서</span>
+      </Link>
     </div>
   )
 }
@@ -219,11 +227,12 @@ export default function HomePage() {
     return (
       <Screen>
         <HomeHeader />
-        <Content gap={16}>
+        <Content gap={16} style={{ paddingBottom: 80 }}>
           <AlarmSetView state={state} update={update} onEdit={editAlarm} onCancel={() => setConfirmCancel(true)} onRefreshed={showToast} />
           <div className="spacer" />
           <AdBanner />
         </Content>
+        <AiFab />
         <BottomNav />
         <BottomSheet open={confirmCancel} title="알람을 취소할까요?" onClose={() => setConfirmCancel(false)}>
           <p className="t-body-m">
@@ -245,7 +254,7 @@ export default function HomePage() {
   return (
     <Screen>
       <HomeHeader />
-      <Content gap={20}>
+      <Content gap={20} style={{ paddingBottom: 80 }}>
         <Hero />
         <div className="chip-row chip-row--fill" role="group" aria-label="일정 유형">
           {CATEGORIES.map(({ label, icon }) => (
@@ -271,6 +280,7 @@ export default function HomePage() {
           />
         </Card>
       </Content>
+      <AiFab />
       <Footer>
         <Button disabled={!ready || submitting} onClick={setAlarm}>
           {submitting ? '알람 계산 중…' : '이 일정으로 알람 설정하기'}
