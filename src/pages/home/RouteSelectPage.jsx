@@ -357,9 +357,9 @@ export default function RouteSelectPage() {
                   <span className="t-body-s-medium">약 {r.min}분</span>
                 ) : (
                   <>
-                    <span className="t-body-s-medium">최소 {r.min}분</span>
+                    <span className="t-body-s-medium">보통 {r.min}분</span>
                     <ArrowRight size={14} color="var(--icon-default)" aria-hidden="true" />
-                    <span className="t-body-s-medium">최대 {r.max}분</span>
+                    <span className="t-body-s-medium">늦으면 {r.max}분</span>
                   </>
                 )}
                 {r.headway != null && <span className="t-body-s c-secondary">· 배차 {r.headway}분</span>}

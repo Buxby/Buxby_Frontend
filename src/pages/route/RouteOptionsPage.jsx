@@ -42,7 +42,7 @@ export default function RouteOptionsPage() {
           return (
             <button key={o.id} type="button" className={`option-card ${on ? 'option-card--on' : ''}`} aria-pressed={on} onClick={() => setSelected(o.id)}>
               <span className="option-card__top">
-                <span className="t-body-l-bold">{o.max == null ? `약 ${o.min}분` : `최소 ${o.min}분 ~ 최대 ${o.max}분`}</span>
+                <span className="t-body-l-bold">{o.max == null ? `약 ${o.min}분` : `보통 ${o.min}분 · 늦으면 ${o.max}분`}</span>
                 {o.recommended && <Badge tone="brand">추천</Badge>}
               </span>
               <span className="ratio-bar" aria-hidden="true">

@@ -819,14 +819,14 @@ export default function RouteDetailPage() {
           <p className="t-title-m c-brand">
             {detail
               ? (detail.max != null && detail.max !== detail.min
-                ? `최소 ${detail.min}분 ~ 최대 ${detail.max}분`
+                ? `보통 ${detail.min}분 · 늦으면 ${detail.max}분`
                 : `약 ${detail.total}분`)
               : `최소 ${RECOMMEND.min}분 ~ 최대 ${RECOMMEND.max}분`}
           </p>
 
-          {detail?.waitMax > 0 && (
+          {detail?.waitExpected > 0 && (
             <p className="t-caption c-secondary">
-              최대는 버스·지하철을 배차 간격만큼 기다리는 경우예요. 알람은 최대 기준으로 맞춰요.
+              배차 간격으로 계산한 대기 시간 포함이에요. 알람은 늦을 때(10번 중 9번은 이 안에 도착) 기준으로 맞춰요.
             </p>
           )}
 

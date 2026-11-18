@@ -12,16 +12,29 @@ const BUS_TYPES = {
   20: '농어촌', 26: '급행간선',
 }
 
-// 한 구간에서 기다릴 수 있는 최대 시간 (백엔드 JourneyTimeEstimator와 같은 규칙)
-const MAX_WAIT_PER_LEG = 30
-const DEFAULT_WAIT_PER_LEG = 5
+// 배차 간격 상한과 간격 정보가 없을 때 기본값(분) — 백엔드 JourneyTimeEstimator와 같은 규칙
+const MAX_HEADWAY = 30
+const DEFAULT_HEADWAY = 10
+const Z90 = 1.2816 // 10번 중 9번은 이 대기 시간 안에 탄다
 
-// 버스·지하철 구간별 배차 간격(intervalTime) 합. 간격 정보가 없으면 기본값, 너무 길면 상한
-function waitMargin(transitSections) {
-  return transitSections.reduce((sum, s) => {
+// 버스·지하철 대기 시간 (분). 정류장에 아무 때나 도착하면 대기는 0~배차 간격(H)에 고르게 퍼지므로
+// 구간별 평균 H/2, 분산 H²/12를 더해 보통(평균)과 늦을 때(90% 지점)를 구한다.
+// 모든 구간에서 최대로 기다리는 경우를 더하면 범위가 지나치게 넓어진다
+export function waitEstimate(transitSections) {
+  let mean = 0
+  let variance = 0
+  let worst = 0
+  for (const s of transitSections) {
     const interval = Number(s.intervalTime)
-    return sum + (interval > 0 ? Math.min(interval, MAX_WAIT_PER_LEG) : DEFAULT_WAIT_PER_LEG)
-  }, 0)
+    const headway = interval > 0 ? Math.min(interval, MAX_HEADWAY) : DEFAULT_HEADWAY
+    mean += headway / 2
+    variance += (headway * headway) / 12
+    worst += headway
+  }
+  // 백엔드 Math.round와 같게 반올림 (.5는 올림)
+  const expected = Math.floor(mean + 0.5)
+  const p90 = Math.min(worst, Math.floor(mean + Z90 * Math.sqrt(variance) + 0.5))
+  return { expected, p90: Math.max(expected, p90) }
 }
 
 // 알람 계산에 쓰는 이동 시간 (최대 소요 시간, 예전에 저장한 경로는 total)
@@ -390,6 +403,7 @@ function toOption(path, originName, destinationName) {
     .join(' → ')
 
   const transfers = transit.length - 1
+  const wait = waitEstimate(transit)
 
   const mixed =
     firstBus &&
@@ -426,10 +440,10 @@ function toOption(path, originName, destinationName) {
     total,
 
     // ODsay totalTime은 타고 걷는 시간만의 합이라 기다리는 시간이 없다.
-    // 최대는 구간별 배차 간격만큼 기다리는 경우 (알람은 최대 기준으로 맞춘다)
-    min: total,
-    max: total + waitMargin(transit),
-    waitMax: waitMargin(transit),
+    // min = 보통(평균 대기), max = 늦을 때(90% 대기) — 알람은 max 기준으로 맞춘다
+    min: total + wait.expected,
+    max: total + wait.p90,
+    waitExpected: wait.expected,
 
     transfer:
       `${transfers ? `환승 ${transfers}회` : '환승 없음'}${mixed ? ' · 지하철 포함' : ''}`,

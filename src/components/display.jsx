@@ -133,12 +133,12 @@ export function TimeRange({ min, max, header = '예상 소요 시간 (도보·�
       <p className="t-body-s-medium c-secondary">{header}</p>
       <div className="time-range__row">
         <span className="time-range__box">
-          <span className="t-body-s c-secondary">최소</span>
+          <span className="t-body-s c-secondary">보통</span>
           <strong className="t-title-s">{min}분</strong>
         </span>
         <ArrowRight size={24} color="var(--icon-default)" aria-hidden="true" />
         <span className="time-range__box">
-          <span className="t-body-s c-secondary">최대</span>
+          <span className="t-body-s c-secondary">늦으면</span>
           <strong className="t-title-s">{max}분</strong>
         </span>
       </div>
