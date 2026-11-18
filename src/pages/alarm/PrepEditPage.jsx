@@ -5,7 +5,17 @@ import { Content, Footer, Screen, TopBar } from '../../components/layout'
 import { Button, Chip } from '../../components/controls'
 import { Card, Divider, MinutesField, Notice, PrepRow } from '../../components/display'
 import { useAppState } from '../../store/context'
+import { getPreparationSetup, setupPreparation } from '../../api/alarm'
 import { prepIcon } from './prepIcons'
+
+// 처음 입력한 준비 시간을 서버에 한 번 저장한다. 기록이 쌓이기 전까지 서버(AI 비서 등)도
+// 기본값 40분 대신 이 값을 쓴다. 로그인 전이거나 이미 저장했으면 조용히 넘어간다
+function saveInitialPrep(minutes) {
+  if (minutes < 1 || minutes > 240) return
+  getPreparationSetup()
+    .then((setup) => (setup?.configured ? null : setupPreparation(minutes)))
+    .catch(() => {})
+}
 
 const MODES = [
   { id: 'items', label: '항목별로' },
@@ -59,6 +69,7 @@ export default function PrepEditPage() {
 
   const save = () => {
     update(mode === 'total' ? { prepMode: 'total', prepTotal: bulk } : { prepMode: 'items', prep: items })
+    saveInitialPrep(mode === 'total' ? bulk : itemsTotal)
     navigate(-1)
   }
 

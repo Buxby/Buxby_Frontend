@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Content, Screen, TopBar } from '../../components/layout'
-import { Card, Divider, SectionLabel, SettingRow } from '../../components/display'
+import { Button } from '../../components/controls'
+import { Card, Divider, Notice, SectionLabel, SettingRow } from '../../components/display'
+import { getRecommendedBuffer } from '../../api/alarm'
 import MinutesSheet from '../../components/MinutesSheet'
 import { clockLabel } from '../../lib/time'
 import { snoozeLimitAt } from '../../lib/snooze'
@@ -38,6 +40,19 @@ export default function AlarmSettingsPage() {
   const s = state.settings
   const sheet = editing ? MINUTE_SETTINGS[editing] : null
   const limitTime = state.alarmSet && state.plan ? clockLabel(snoozeLimitAt(state.plan, s)) : null
+  const [recommendedBuffer, setRecommendedBuffer] = useState(null)
+
+  // 버스를 놓친 기록이 쌓이면 서버가 여유 시간을 늘리라고 추천한다 (기록이 적으면 기본값 5분)
+  useEffect(() => {
+    let cancelled = false
+    getRecommendedBuffer()
+      .then((res) => !cancelled && setRecommendedBuffer(res?.bufferMinutes ?? null))
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+  const suggestBuffer = recommendedBuffer > 5 && s.bufferMinutes < recommendedBuffer
 
   return (
     <Screen>
@@ -58,6 +73,14 @@ export default function AlarmSettingsPage() {
           <Divider />
           <SettingRow title="기본 여유 시간" description="최대 소요 시간에 더해 계산해요" value={`${s.bufferMinutes}분`} onClick={() => setEditing('bufferMinutes')} />
         </Card>
+        {suggestBuffer && (
+          <>
+            <Notice>최근 버스를 놓친 기록이 있어요. 여유 시간을 {recommendedBuffer}분 이상 두는 걸 추천해요.</Notice>
+            <Button variant="secondary" size="m" onClick={() => setSetting('bufferMinutes', recommendedBuffer)}>
+              여유 시간 {recommendedBuffer}분으로 바꾸기
+            </Button>
+          </>
+        )}
         <SectionLabel>안전</SectionLabel>
         <Card>
           <SettingRow title="안전 알람" description="알람을 끄지 않으면 미루기 상한 시각에 한 번 더 울려요" checked={s.safetyAlarm} onToggle={(v) => setSetting('safetyAlarm', v)} />
