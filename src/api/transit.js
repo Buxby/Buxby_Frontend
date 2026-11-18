@@ -1,4 +1,4 @@
-import { request } from './client'
+import { ApiError, request } from './client'
 
 function coordinates(origin, destination) {
   return {
@@ -76,13 +76,25 @@ export function collectBusCongestion(busRouteIds) {
     })
   }
 
-  // 백엔드 Batch API 호출
+  // 백엔드 Batch API 호출 (로그인 사용자만 가능)
   return request('/api/seoul/bus/positions/collect-batch', {
     method: 'POST',
 
     body: {
       busRouteIds: uniqueRouteIds,
     },
+  }).catch((err) => {
+    // 로그인하지 않은 사용자는 오류 대신 '로그인 필요' 상태로 돌려준다
+    if (err instanceof ApiError && err.status === 401) {
+      return {
+        status: 'LOGIN_REQUIRED',
+        requestedCount: uniqueRouteIds.length,
+        successCount: 0,
+        failedCount: 0,
+        results: [],
+      }
+    }
+    throw err
   })
 }
 
