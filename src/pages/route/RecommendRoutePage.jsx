@@ -149,7 +149,7 @@ export default function RecommendRoutePage() {
             [stop.lat, stop.lng],
           ]}
           route={live ? detail.path : ROUTE_PATH}
-          callout={{ title: `약 ${data.total}분`, sub: `(도보 ${data.totalWalk}분 포함)`, x: 50, y: 26, lat: (home.lat + goal.lat) / 2, lng: (home.lng + goal.lng) / 2 }}
+          callout={{ title: data.max != null && data.max !== data.min ? `${data.min}~${data.max}분` : `약 ${data.total}분`, sub: `(도보 ${data.totalWalk}분 포함)`, x: 50, y: 26, lat: (home.lat + goal.lat) / 2, lng: (home.lng + goal.lng) / 2 }}
           labels={[{ text: goal.name, x: 80, y: 66 }]}
         />
       )}

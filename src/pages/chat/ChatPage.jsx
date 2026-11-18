@@ -39,9 +39,12 @@ function dateTimeLabel(value) {
   return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]}) ${clockLabel(d)}`
 }
 
+// 서버 오류(5xx)는 응답에 이유가 없어서 상태 코드로 안내한다
 function friendlyError(err) {
   if (err.status === 401) return '로그인해야 AI 비서를 쓸 수 있어요.'
-  if (err.status === 503) return 'AI 비서가 잠시 쉬고 있어요. 잠시 후 다시 시도해 주세요.'
+  if (err.status === 503) return 'AI가 지금 혼잡해서 답하지 못했어요. 잠시 후 다시 보내 주세요.'
+  if (err.status === 502) return 'AI나 교통 정보 서버에서 답을 받지 못했어요. 잠시 후 다시 보내 주세요.'
+  if (err.status === 504 || err.status === 0) return '응답이 너무 늦어 연결이 끊겼어요. 잠시 후 다시 보내 주세요.'
   return err.message
 }
 
