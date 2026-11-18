@@ -14,6 +14,7 @@ import RecommendRoutePage from './pages/route/RecommendRoutePage'
 import RouteDetailPage from './pages/route/RouteDetailPage'
 import RouteOptionsPage from './pages/route/RouteOptionsPage'
 import DelayPage from './pages/route/DelayPage'
+import MissedBusPage from './pages/route/MissedBusPage'
 import PrepLearningPage from './pages/alarm/PrepLearningPage'
 import PrepEditPage from './pages/alarm/PrepEditPage'
 import AlarmSettingsPage from './pages/alarm/AlarmSettingsPage'
@@ -24,7 +25,9 @@ import MorePage from './pages/more/MorePage'
 import AdFreePage from './pages/more/AdFreePage'
 import PermissionSettingsPage from './pages/more/PermissionSettingsPage'
 import ScreensPage from './pages/ScreensPage'
+import ChatPage from './pages/chat/ChatPage'
 import AlarmWatcher from './components/AlarmWatcher'
+import AlarmSync from './components/AlarmSync'
 
 // 간편 로그인 후 백엔드가 /?socialLogin=success|failed 로 돌려보낸다
 function SocialLoginRedirect() {
@@ -46,6 +49,7 @@ export default function App() {
     <div className="app-column">
       <SocialLoginRedirect />
       <AlarmWatcher />
+      <AlarmSync />
       <Routes>
         {/* A. 로그인·간편 로그인 */}
         <Route path="/" element={<StartPage />} />
@@ -64,6 +68,7 @@ export default function App() {
         <Route path="/route/detail" element={<RouteDetailPage />} />
         <Route path="/route/options" element={<RouteOptionsPage />} />
         <Route path="/route/delay" element={<DelayPage />} />
+        <Route path="/route/missed" element={<MissedBusPage />} />
 
         {/* D. 기상·출발 알람 */}
         <Route path="/alarm" element={<PrepLearningPage />} />
@@ -72,6 +77,9 @@ export default function App() {
         <Route path="/alarm/wake" element={<WakeAlarmPage />} />
         <Route path="/alarm/depart" element={<DepartAlarmPage />} />
         <Route path="/alarm/postponed" element={<PostponedPage />} />
+
+        {/* AI 비서 */}
+        <Route path="/chat" element={<ChatPage />} />
 
         {/* E. 더보기 */}
         <Route path="/more" element={<MorePage />} />

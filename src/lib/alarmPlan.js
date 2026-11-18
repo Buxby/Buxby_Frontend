@@ -1,4 +1,4 @@
-import { createReservation, predictPreparation, recommendAlarm } from '../api/alarm'
+import { ackAlarmSync, createReservation, predictPreparation, recommendAlarm } from '../api/alarm'
 import { LEARNING } from '../data/mock'
 import { addMinutes, nextArrival, toLocalDateTime } from './time'
 
@@ -12,6 +12,12 @@ async function resolvePrepMinutes(state) {
   const prediction = await predictPreparation()
   const minutes = prediction.samples >= LEARNING.requiredDays ? prediction.predictedMinutes : manualPrepMinutes(state)
   return Math.min(Math.max(minutes, 1), 1440)
+}
+
+// 앱(AlarmWatcher)이 알람을 맡았다고 서버에 알린다. 서버는 이 상태(SCHEDULED)인 예약만
+// 도착 후 '제때 탔음'으로 기록해 여유 시간 학습에 쓴다. 실패해도 알람은 그대로 울린다
+export function confirmScheduled(reservationId, wakeTime) {
+  return ackAlarmSync(reservationId, wakeTime).catch(() => null)
 }
 
 // 선택한 경로로 기상·출발 시각을 계산하고 서버에 예약을 저장한다
@@ -34,12 +40,17 @@ export async function planAlarm(state, option = state.routeDetail) {
     leaveHomeTime: recommended.leaveHomeTime,
     routeMinutes: option.total,
     preparationMinutes,
+    // 고른 경로를 함께 저장해야 서버 자동 점검·버스 놓침 대체 경로를 쓸 수 있다
+    selectedPathJson: option.odsayPath ? JSON.stringify(option.odsayPath) : null,
+    bufferMinutes,
   })
+  const wakeTime = reservation.wakeTime ?? recommended.wakeTime
+  await confirmScheduled(reservation.id, wakeTime)
 
   return {
     reservationId: reservation.id,
-    wakeTime: recommended.wakeTime,
-    leaveHomeTime: recommended.leaveHomeTime,
+    wakeTime,
+    leaveHomeTime: reservation.leaveHomeTime ?? recommended.leaveHomeTime,
     boardingTime: recommended.busBoardingTime,
     arrivalTime: toLocalDateTime(arrival),
     preparationMinutes,

@@ -424,6 +424,9 @@ function toOption(path, originName, destinationName) {
 
     recommended: false,
 
+    // ODsay 원본 경로. 알람 예약에 함께 저장하면 서버가 자동 점검·버스 놓침 대체 경로에 쓴다
+    odsayPath: path,
+
     // =====================================
     // 신규: 전체 버스 구간 정보
     // =====================================
@@ -502,6 +505,11 @@ export function toRouteOptions(
   }
 
   return options
+}
+
+// ODsay 경로 하나를 화면용 경로로 변환 (AI 비서가 계산한 경로 등). 대중교통이 없으면 null
+export function toRouteOption(path, originName, destinationName) {
+  return path ? toOption(path, originName, destinationName) : null
 }
 
 
