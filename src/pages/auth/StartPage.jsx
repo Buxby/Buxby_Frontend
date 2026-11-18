@@ -2,7 +2,8 @@ import { Link, useNavigate } from 'react-router'
 import { BusFront, Sparkle, Timer } from 'lucide-react'
 import { Content, Footer, Screen } from '../../components/layout'
 import { Button } from '../../components/controls'
-import { IconTile, IllustrationSlot } from '../../components/display'
+import { IconTile } from '../../components/display'
+import illustration from '../../assets/start-illustration.jpg'
 
 const VALUES = [
   { icon: Sparkle, text: 'AI가 나의 평균 준비 시간을 학습해요' },
@@ -16,7 +17,7 @@ export default function StartPage() {
   return (
     <Screen bg="surface">
       <Content gap={12} style={{ paddingTop: 24 }}>
-        <IllustrationSlot height={260} label="일러스트 자리 · 침대에서 일어나는 사람 (보완 요청)" />
+        <img src={illustration} alt="목적지까지 제때 도착하는 AI 대중교통 비서 버스비" className="start-illustration" width={720} height={720} />
         <p className="t-title-s c-brand" style={{ marginTop: 12 }}>버스비</p>
         <h1 className="t-display-l">
           버스에 맞춰 깨우는
