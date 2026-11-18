@@ -182,6 +182,11 @@ export default function RecommendRoutePage() {
             ))}
           </div>
           <TimeRange min={data.min} max={data.max} />
+          {live && state.alarmSet && state.plan && (
+            <Button variant="tertiary" size="m" className="missed-link" onClick={() => navigate('/route/missed')}>
+              <CircleAlert size={18} /> 버스를 놓쳤어요 · 다른 길 찾기
+            </Button>
+          )}
           <AdBanner />
         </Content>
       )}

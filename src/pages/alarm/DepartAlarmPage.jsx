@@ -112,6 +112,11 @@ export default function DepartAlarmPage() {
         <button type="button" className="t-body-s-medium underline-link" onClick={() => navigate('/route')}>
           {info.nextLabel}
         </button>
+        {plan && (
+          <button type="button" className="t-body-s-medium underline-link" onClick={() => navigate('/route/missed')}>
+            버스를 놓쳤어요 · 다른 길 찾기
+          </button>
+        )}
       </Footer>
     </Screen>
   )
