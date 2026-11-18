@@ -179,7 +179,15 @@ function BusCongestionSection({ congestion, detail }) {
         </p>
       )}
 
-      {congestion?.status === 'REQUEST_FAILED' && (
+      {congestion?.status === 'LOGIN_REQUIRED' && (
+        <p className="t-body-s c-secondary">
+          로그인하면 실시간 버스 혼잡도를 볼 수 있어요.
+          경로 이용에는 문제가 없어요.
+        </p>
+      )}
+
+      {/* REQUEST_FAILED: 요청 자체 실패(프론트), FAILED: 모든 노선 수집 실패(백엔드) */}
+      {['REQUEST_FAILED', 'FAILED'].includes(congestion?.status) && (
         <p className="t-body-s c-secondary">
           혼잡도 정보를 가져오지 못했어요.
           경로 이용에는 문제가 없어요.
