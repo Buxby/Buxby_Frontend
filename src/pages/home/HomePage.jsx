@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { BellOff, BusFront, Briefcase, Clock, GraduationCap, MapPin, RefreshCw, Settings, ShieldCheck, User } from 'lucide-react'
+import { BellOff, BusFront, Briefcase, Clock, GraduationCap, MapPin, MessageCircle, RefreshCw, Settings, ShieldCheck, User } from 'lucide-react'
 import { BottomNav, BottomSheet, Content, Footer, Screen } from '../../components/layout'
 import { Button, Chip } from '../../components/controls'
 import { AdBanner, Badge, Card, Divider, IllustrationSlot, ListRow, Toast } from '../../components/display'
 import { formatArrival, useAppState } from '../../store/context'
 import { ALARM } from '../../data/mock'
-import { deleteReservation } from '../../api/alarm'
+import { cancelReservation, deleteReservation } from '../../api/alarm'
 import { searchRoutes } from '../../api/transit'
 import { planAlarm } from '../../lib/alarmPlan'
 import { toRouteOptions } from '../../lib/routes'
@@ -25,9 +25,14 @@ function HomeHeader() {
   return (
     <div className="home-header">
       <span className="t-title-s c-brand">버스비</span>
-      <Link to="/alarm/settings" className="icon-button" aria-label="알람 설정">
-        <Settings size={24} color="var(--icon-default)" />
-      </Link>
+      <span className="home-header__actions">
+        <Link to="/chat" className="icon-button" aria-label="AI 비서">
+          <MessageCircle size={24} color="var(--icon-default)" />
+        </Link>
+        <Link to="/alarm/settings" className="icon-button" aria-label="알람 설정">
+          <Settings size={24} color="var(--icon-default)" />
+        </Link>
+      </span>
     </div>
   )
 }
@@ -159,6 +164,14 @@ export default function HomePage() {
     showToast(routeToast)
     navigate(location.pathname, { replace: true, state: null })
   }, [routeToast, showToast, navigate, location.pathname])
+
+  // 서버 동기화(AlarmSync)로 알람이 바뀌었으면 한 번 알려준다
+  const { syncNotice } = state
+  useEffect(() => {
+    if (!syncNotice) return
+    showToast(syncNotice)
+    update({ syncNotice: null })
+  }, [syncNotice, showToast, update])
   const ready = state.destination && state.arrival && state.origin && state.route
 
   const setAlarm = async () => {
@@ -190,7 +203,8 @@ export default function HomePage() {
     setCancelling(true)
     let failed = false
     if (plan) {
-      await deleteReservation(plan.reservationId).catch((err) => {
+      // 지우지 않고 취소 상태로 남겨 둔다 (이동 기록 학습·다른 기기 동기화에 쓰인다)
+      await cancelReservation(plan.reservationId).catch((err) => {
         failed = err.status !== 404
       })
     }

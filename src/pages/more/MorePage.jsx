@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { AlarmClock, Bed, Bell, ChevronRight, LogOut, MapPin, ShieldCheck, User } from 'lucide-react'
+import { AlarmClock, Bed, Bell, ChevronRight, LogOut, MapPin, MessageCircle, ShieldCheck, User } from 'lucide-react'
 import { BottomNav, Content, Screen, TopBar } from '../../components/layout'
 import { Button } from '../../components/controls'
 import { Card, Divider, IconTile } from '../../components/display'
@@ -14,6 +14,7 @@ const PROVIDER = {
 }
 
 const MENUS = [
+  { icon: MessageCircle, label: 'AI 비서', to: '/chat' },
   { icon: AlarmClock, label: '알람 설정', to: '/alarm/settings' },
   { icon: Bed, label: '준비 시간 학습', to: '/alarm' },
   { icon: Bell, label: '권한·알림 설정', to: '/more/permissions' },

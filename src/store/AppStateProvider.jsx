@@ -21,6 +21,8 @@ const DEFAULT_STATE = {
   alarmFired: {}, // { wake, depart, safety, dismissed }: 이미 울렸거나 끈 알람의 예약 ID
   snooze: null, // { reservationId, until, count }: 미뤄 둔 기상 알람
   lastApproach: null, // 출발 알람 판단에 쓴 마지막 버스 접근 정보 (+ receivedAt)
+  syncNotice: null, // 서버 동기화로 알람이 바뀌었을 때 홈에서 한 번 보여줄 안내
+  missedReportedFor: null, // 버스 놓침을 이미 기록한 예약 ID (중복 기록 방지)
   alarmSet: false,
   permissionsDone: false,
   prep: DEFAULT_PREP,
