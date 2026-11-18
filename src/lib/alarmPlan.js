@@ -1,5 +1,6 @@
 import { ackAlarmSync, createReservation, predictPreparation, recommendAlarm } from '../api/alarm'
 import { LEARNING } from '../data/mock'
+import { planMinutes } from './routes'
 import { addMinutes, nextArrival, toLocalDateTime } from './time'
 
 function manualPrepMinutes(state) {
@@ -24,8 +25,10 @@ export function confirmScheduled(reservationId, wakeTime) {
 export async function planAlarm(state, option = state.routeDetail) {
   const preparationMinutes = await resolvePrepMinutes(state)
   const bufferMinutes = state.settings.bufferMinutes
-  const arrival = nextArrival(state.arrival, state.days, option.total + bufferMinutes + preparationMinutes + 1)
-  const boarding = addMinutes(arrival, -(option.total - option.walkToStop))
+  // 기다리는 시간까지 넣은 최대 소요 시간으로 맞춘다 (ODsay 소요 시간에는 대기 시간이 없다)
+  const routeMinutes = planMinutes(option)
+  const arrival = nextArrival(state.arrival, state.days, routeMinutes + bufferMinutes + preparationMinutes + 1)
+  const boarding = addMinutes(arrival, -(routeMinutes - option.walkToStop))
 
   const recommended = await recommendAlarm({
     busBoardingTime: toLocalDateTime(boarding),
@@ -38,7 +41,7 @@ export async function planAlarm(state, option = state.routeDetail) {
     desiredArrivalTime: toLocalDateTime(arrival),
     wakeTime: recommended.wakeTime,
     leaveHomeTime: recommended.leaveHomeTime,
-    routeMinutes: option.total,
+    routeMinutes,
     preparationMinutes,
     // 고른 경로를 함께 저장해야 서버 자동 점검·버스 놓침 대체 경로를 쓸 수 있다
     selectedPathJson: option.odsayPath ? JSON.stringify(option.odsayPath) : null,

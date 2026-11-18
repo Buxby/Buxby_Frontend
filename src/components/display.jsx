@@ -114,7 +114,7 @@ export function BusRow({ type = 'bus', route, tag, sub, onClick }) {
 }
 
 // 피그마 TimeRange: 최소·최대 소요 시간
-export function TimeRange({ min, max, header = '예상 소요 시간 (도보 포함)' }) {
+export function TimeRange({ min, max, header = '예상 소요 시간 (도보·대기 포함)' }) {
   if (max == null) {
     return (
       <div className="time-range">

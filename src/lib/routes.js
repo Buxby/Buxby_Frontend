@@ -12,6 +12,23 @@ const BUS_TYPES = {
   20: '농어촌', 26: '급행간선',
 }
 
+// 한 구간에서 기다릴 수 있는 최대 시간 (백엔드 JourneyTimeEstimator와 같은 규칙)
+const MAX_WAIT_PER_LEG = 30
+const DEFAULT_WAIT_PER_LEG = 5
+
+// 버스·지하철 구간별 배차 간격(intervalTime) 합. 간격 정보가 없으면 기본값, 너무 길면 상한
+function waitMargin(transitSections) {
+  return transitSections.reduce((sum, s) => {
+    const interval = Number(s.intervalTime)
+    return sum + (interval > 0 ? Math.min(interval, MAX_WAIT_PER_LEG) : DEFAULT_WAIT_PER_LEG)
+  }, 0)
+}
+
+// 알람 계산에 쓰는 이동 시간 (최대 소요 시간, 예전에 저장한 경로는 total)
+export function planMinutes(option) {
+  return option.max ?? option.total
+}
+
 // 좌표를 안전하게 숫자로 변환
 function toNumberOrNull(value) {
   if (value === null || value === undefined || value === '') {
@@ -408,8 +425,11 @@ function toOption(path, originName, destinationName) {
     ride: total - walk,
     total,
 
+    // ODsay totalTime은 타고 걷는 시간만의 합이라 기다리는 시간이 없다.
+    // 최대는 구간별 배차 간격만큼 기다리는 경우 (알람은 최대 기준으로 맞춘다)
     min: total,
-    max: null,
+    max: total + waitMargin(transit),
+    waitMax: waitMargin(transit),
 
     transfer:
       `${transfers ? `환승 ${transfers}회` : '환승 없음'}${mixed ? ' · 지하철 포함' : ''}`,
