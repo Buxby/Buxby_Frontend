@@ -24,7 +24,8 @@ export function Spacer() {
 }
 
 // 피그마 TopBar (Type=Back / Type=Large)
-export function TopBar({ variant = 'back', title, action, right, backTo }) {
+// back={false}: 하단 탭으로 들어오는 첫 화면처럼 돌아갈 곳이 없으면 뒤로가기 버튼을 숨긴다
+export function TopBar({ variant = 'back', title, action, right, backTo, back = true }) {
   const navigate = useNavigate()
   const goBack = () => {
     if (backTo) navigate(backTo)
@@ -44,9 +45,11 @@ export function TopBar({ variant = 'back', title, action, right, backTo }) {
   return (
     <header className="topbar">
       <div className="topbar__side">
-        <button type="button" className="icon-button" onClick={goBack} aria-label="뒤로 가기">
-          <ChevronLeft size={24} color="var(--icon-strong)" />
-        </button>
+        {back && (
+          <button type="button" className="icon-button" onClick={goBack} aria-label="뒤로 가기">
+            <ChevronLeft size={24} color="var(--icon-strong)" />
+          </button>
+        )}
       </div>
       <h1 className="topbar__title t-title-s">{title}</h1>
       <div className="topbar__side topbar__side--right">

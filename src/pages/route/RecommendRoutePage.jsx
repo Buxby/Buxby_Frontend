@@ -94,7 +94,7 @@ export default function RecommendRoutePage() {
   if (!forced && !live) {
     return (
       <Screen>
-        <TopBar title="추천 경로" backTo="/home" />
+        <TopBar title="추천 경로" back={false} />
         <Content gap={12} style={{ paddingTop: 16 }}>
           <Card padded className="error-card">
             <IconTile icon={BusFront} size={56} iconSize={28} />
@@ -135,7 +135,7 @@ export default function RecommendRoutePage() {
 
   return (
     <Screen>
-      <TopBar title="추천 경로" action={refresh} backTo="/home" />
+      <TopBar title="추천 경로" action={refresh} back={false} />
       {status === 'ready' && (
         <KakaoMap
           height={190}

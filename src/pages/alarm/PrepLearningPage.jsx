@@ -118,7 +118,7 @@ export default function PrepLearningPage() {
 
   return (
     <Screen>
-      <TopBar title="준비 시간 학습" right={<SettingsLink />} backTo="/home" />
+      <TopBar title="준비 시간 학습" right={<SettingsLink />} back={false} />
       <Content gap={12}>
         {!loading && (learning
           ? <Learning records={forced ? 3 : samples} manualMinutes={manualMinutes} />
