@@ -71,6 +71,29 @@ export default function RouteSelectPage() {
           }))
         )
 
+        // 지역별 버스 API 구분 확인
+        console.table(
+          all.flatMap((option) =>
+            (option.busTargets ?? []).map((bus) => ({
+              경로: option.name,
+              버스번호: bus.busNo,
+              노선ID: bus.busRouteId,
+              제공기관: bus.provider,
+              제공기관코드: bus.providerCode,
+              도시코드: bus.busCityCode,
+              운행지역: bus.busCityName,
+            }))
+          )
+        )
+
+        console.log(
+          '[지역별 버스 API 요청 대상]',
+          all.map((option) => ({
+            name: option.name,
+            busTargets: option.busTargets,
+          }))
+        )
+
         // 지하철 구간 추출 결과 확인
         console.table(
           all.flatMap((option) =>

@@ -106,13 +106,44 @@ function extractBusSegments(sections) {
         const busRouteId = lane.busLocalBlID == null
           ? null
           : String(lane.busLocalBlID)
+        
+        const providerCode = lane.busProviderCode == null
+          ? null
+          : Number(lane.busProviderCode)
+
+        const busCityCode = lane.busCityCode == null
+          ? null
+          : Number(lane.busCityCode)
+
+        // ODsay BIS 제공기관 코드로 지역 판별
+        const provider =
+          providerCode === 4 || providerCode === 10
+            ? 'SEOUL'
+            : providerCode === 2 || providerCode === 9
+              ? 'GYEONGGI'
+              : providerCode === 6
+                ? 'INCHEON'
+                : 'TAGO'
 
         return {
           busNo,
           busRouteId,
+
           name: lane.name ?? null,
           type: lane.type ?? null,
+
+          // 신규: 지역별 API 구분 정보
+          providerCode,
+          busCityCode,
+          provider,
+
+          // 운행지역 이름
+          busCityName:
+            lane.busCityNameKor
+            ?? lane.busCityName
+            ?? null,
         }
+
       })
       .filter((lane) => lane.busNo || lane.busRouteId)
 
@@ -343,6 +374,44 @@ function toOption(path, originName, destinationName) {
   // 모든 버스 구간 추출
   const busSegments = extractBusSegments(sections)
 
+  // =====================================
+  // 지역별 버스 API 요청 대상 생성
+  // =====================================
+
+  const busTargetMap = new Map()
+
+  busSegments.forEach((segment) => {
+
+    segment.lanes.forEach((lane) => {
+
+      if (!lane.busRouteId) return
+
+      // 지역 코드와 노선 ID가 같은 경우에만 중복 제거
+      const key =
+        `${lane.providerCode ?? 'UNKNOWN'}:${lane.busRouteId}`
+
+      if (busTargetMap.has(key)) return
+
+      busTargetMap.set(key, {
+        busRouteId: lane.busRouteId,
+        busNo: lane.busNo,
+
+        provider: lane.provider,
+        providerCode: lane.providerCode,
+        busCityCode: lane.busCityCode,
+        busCityName: lane.busCityName,
+
+        boardingStationName:
+          segment.boardingStationName,
+
+        boardingStationId:
+          segment.boardingStationId,
+      })
+    })
+  })
+
+  const busTargets = [...busTargetMap.values()]
+
     // 모든 지하철 구간 추출
   const subwaySegments = extractSubwaySegments(sections)
 
@@ -472,6 +541,9 @@ function toOption(path, originName, destinationName) {
 
     // 경로에 포함된 모든 버스 번호
     allBusNos,
+
+    // 지역별 API를 호출하기 위한 버스 정보
+    busTargets,
 
     // =====================================
     // 신규: 전체 지하철 구간 정보
