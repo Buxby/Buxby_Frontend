@@ -770,7 +770,7 @@ export default function RouteDetailPage() {
   }, [subwayStationNames, update])
 
   // =====================================
-  // 3분마다 지하철 도착정보 자동 갱신
+  // 최초 진입 시 조회 + 3분마다 자동 갱신
   // =====================================
 
   useEffect(() => {
@@ -779,6 +779,10 @@ export default function RouteDetailPage() {
       return undefined
     }
 
+    // 페이지 진입 즉시 조회
+    refreshSubwayArrivals()
+
+    // 이후 3분마다 자동 갱신
     const intervalId = window.setInterval(() => {
       refreshSubwayArrivals()
     }, 180000)
