@@ -96,56 +96,81 @@ function extractBusSegments(sections) {
     }
 
     // 해당 구간의 버스 노선 정보
-    const lanes = (section.lane ?? [])
-      .map((lane) => {
+    
+  const lanes = (section.lane ?? [])
+    .map((lane) => {
 
-        const busNo = lane.busNo == null
+      const busNo = lane.busNo == null
+        ? null
+        : String(lane.busNo)
+
+      const busRouteId = lane.busLocalBlID == null
+        ? null
+        : String(lane.busLocalBlID)
+
+      // ODsay BIS 제공기관 코드
+      const providerCode = toNumberOrNull(
+        lane.busProviderCode
+        ?? section.startStationProviderCode
+      )
+
+      // 운수회사 승인 도시 코드
+      const busCityCode = toNumberOrNull(
+        lane.busCityCode
+        ?? section.startStationCityCode
+      )
+
+      // 운행지역 이름
+      const busCityName =
+        lane.busCityNameKor
+        ?? lane.busCityName
+        ?? null
+
+      // 지역별 교통정보 제공기관 판별
+      let provider = 'UNKNOWN'
+
+      if ([4, 10].includes(providerCode)) {
+        provider = 'SEOUL'
+      } else if ([2, 9].includes(providerCode)) {
+        provider = 'GYEONGGI'
+      } else if (providerCode === 6 || busCityCode === 2000) {
+        provider = 'INCHEON'
+      } else if (busCityCode === 1000) {
+        provider = 'SEOUL'
+      } else if (
+        busCityCode >= 1010
+        && busCityCode <= 1310
+        && busCityCode % 10 === 0
+      ) {
+        provider = 'GYEONGGI'
+      } else if (
+        providerCode !== null
+        || busCityCode !== null
+      ) {
+        provider = 'OTHER_BIS'
+      }
+
+      return {
+        busNo,
+        busRouteId,
+
+        // ODsay 내부 노선 ID
+        busId: lane.busID == null
           ? null
-          : String(lane.busNo)
+          : String(lane.busID),
 
-        const busRouteId = lane.busLocalBlID == null
-          ? null
-          : String(lane.busLocalBlID)
-        
-        const providerCode = lane.busProviderCode == null
-          ? null
-          : Number(lane.busProviderCode)
+        name: lane.name ?? null,
+        type: lane.type ?? null,
 
-        const busCityCode = lane.busCityCode == null
-          ? null
-          : Number(lane.busCityCode)
+        // 신규: 지역 및 API 제공기관 정보
+        provider,
+        providerCode,
+        busCityCode,
+        busCityName,
+      }
+    })
+    .filter((lane) => lane.busNo || lane.busRouteId || lane.busId)
 
-        // ODsay BIS 제공기관 코드로 지역 판별
-        const provider =
-          providerCode === 4 || providerCode === 10
-            ? 'SEOUL'
-            : providerCode === 2 || providerCode === 9
-              ? 'GYEONGGI'
-              : providerCode === 6
-                ? 'INCHEON'
-                : 'TAGO'
-
-        return {
-          busNo,
-          busRouteId,
-
-          name: lane.name ?? null,
-          type: lane.type ?? null,
-
-          // 신규: 지역별 API 구분 정보
-          providerCode,
-          busCityCode,
-          provider,
-
-          // 운행지역 이름
-          busCityName:
-            lane.busCityNameKor
-            ?? lane.busCityName
-            ?? null,
-        }
-
-      })
-      .filter((lane) => lane.busNo || lane.busRouteId)
 
     // 버스 번호 중복 제거
     const busNos = [
@@ -384,33 +409,43 @@ function toOption(path, originName, destinationName) {
 
     segment.lanes.forEach((lane) => {
 
-      if (!lane.busRouteId) return
+      if (!lane.busRouteId && !lane.busId) return
 
-      // 지역 코드와 노선 ID가 같은 경우에만 중복 제거
-      const key =
-        `${lane.providerCode ?? 'UNKNOWN'}:${lane.busRouteId}`
+      // 지역 및 제공기관이 다른 노선은 구분
+      const key = [
+        lane.providerCode ?? 'UNKNOWN',
+        lane.busCityCode ?? 'UNKNOWN',
+        lane.busRouteId ?? lane.busId,
+      ].join(':')
 
       if (busTargetMap.has(key)) return
 
       busTargetMap.set(key, {
-        busRouteId: lane.busRouteId,
         busNo: lane.busNo,
+        busRouteId: lane.busRouteId,
+        busId: lane.busId,
 
         provider: lane.provider,
         providerCode: lane.providerCode,
         busCityCode: lane.busCityCode,
         busCityName: lane.busCityName,
 
+        sectionIndex: segment.sectionIndex,
+
         boardingStationName:
           segment.boardingStationName,
 
         boardingStationId:
           segment.boardingStationId,
+
+        boardingArsId:
+          segment.boardingArsId,
       })
     })
   })
 
   const busTargets = [...busTargetMap.values()]
+
 
     // 모든 지하철 구간 추출
   const subwaySegments = extractSubwaySegments(sections)
