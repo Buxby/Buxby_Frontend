@@ -12,6 +12,76 @@ const BUS_TYPES = {
   20: '농어촌', 26: '급행간선',
 }
 
+// ODsay BIS 제공기관 코드별 지역명
+const BIS_PROVIDER_NAMES = {
+  2: '경기',
+  3: '대전',
+  4: '서울',
+  5: '군산',
+  6: '인천',
+  7: '울산',
+  8: '광주',
+  9: '경기 마을버스',
+  10: '서울 마을버스',
+  11: '부산',
+  12: '창원',
+  13: '대구',
+  14: '경산',
+  15: '제주',
+  16: '세종',
+  17: '청주',
+  18: '포항',
+  19: '거제',
+  20: '아산',
+  21: '천안',
+  22: '춘천',
+  23: '강릉',
+  25: '원주',
+  26: '양산',
+  27: '전주',
+  28: '목포',
+  29: '밀양',
+  30: '경주',
+  31: '광양',
+  32: '순천',
+  33: '여수',
+  34: '진주',
+  35: '통영',
+  36: '구미',
+  37: '김천',
+  38: '김해',
+  39: '속초',
+  40: '동해',
+  41: '태백',
+  42: '삼척',
+  43: '평창군',
+  44: '홍천군',
+  45: '영월군',
+  46: '정선군',
+  47: '철원군',
+  48: '화천군',
+  49: '양구군',
+  50: '인제군',
+  51: '고성군',
+  52: '양양군',
+  53: '논산',
+  54: '서산',
+  55: '영주',
+  56: '칠곡군',
+  57: '익산',
+  58: '정읍',
+  59: '강진',
+  60: '영광',
+  61: '함평',
+  62: '무주',
+  63: '순창',
+  64: '임실',
+  65: '장수',
+  66: '진안',
+  67: '부여',
+  70: '충주',
+}
+
 // 배차 간격 상한과 간격 정보가 없을 때 기본값(분) — 백엔드 JourneyTimeEstimator와 같은 규칙
 const MAX_HEADWAY = 30
 const DEFAULT_HEADWAY = 10
@@ -126,35 +196,52 @@ function extractBusSegments(sections) {
         ?? lane.busCityName
         ?? null
 
-      // 지역별 교통정보 제공기관 판별
+      // =====================================
+      // BIS 제공기관 기반 지역 판별
+      // =====================================
+
       let provider = 'UNKNOWN'
 
-      if ([4, 10].includes(providerCode)) {
-        provider = 'SEOUL'
-      } else if ([2, 9].includes(providerCode)) {
-        provider = 'GYEONGGI'
-      } else if (providerCode === 6 || busCityCode === 2000) {
-        provider = 'INCHEON'
-      } else if (busCityCode === 1000) {
-        provider = 'SEOUL'
-      } else if (
-        busCityCode >= 1010
-        && busCityCode <= 1310
-        && busCityCode % 10 === 0
-      ) {
-        provider = 'GYEONGGI'
-      } else if (
-        providerCode !== null
-        || busCityCode !== null
-      ) {
-        provider = 'OTHER_BIS'
+      // BIS 제공기관 코드가 가장 우선
+      switch (providerCode) {
+
+        // 서울
+        case 4:
+        case 10:
+          provider = 'SEOUL'
+          break
+
+        // 경기
+        case 2:
+        case 9:
+          provider = 'GYEONGGI'
+          break
+
+        // 인천
+        case 6:
+          provider = 'INCHEON'
+          break
+
+        // 그 외 지자체
+        default:
+          if (providerCode !== null) {
+            provider = 'OTHER_BIS'
+          } else if (busCityCode === 1000) {
+            // BIS 코드가 없지만 서울 도시코드인 경우
+            provider = 'SEOUL'
+          }
       }
+
+      // 실제 BIS 제공기관 이름
+      const providerName =
+        BIS_PROVIDER_NAMES[providerCode]
+        ?? busCityName
+        ?? '확인 불가'
 
       return {
         busNo,
         busRouteId,
 
-        // ODsay 내부 노선 ID
         busId: lane.busID == null
           ? null
           : String(lane.busID),
@@ -162,8 +249,9 @@ function extractBusSegments(sections) {
         name: lane.name ?? null,
         type: lane.type ?? null,
 
-        // 신규: 지역 및 API 제공기관 정보
+        // 지역별 API 구분 정보
         provider,
+        providerName,
         providerCode,
         busCityCode,
         busCityName,
@@ -426,6 +514,7 @@ function toOption(path, originName, destinationName) {
         busId: lane.busId,
 
         provider: lane.provider,
+        providerName: lane.providerName,
         providerCode: lane.providerCode,
         busCityCode: lane.busCityCode,
         busCityName: lane.busCityName,

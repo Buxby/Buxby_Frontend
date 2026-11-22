@@ -79,9 +79,9 @@ export default function RouteSelectPage() {
               버스번호: bus.busNo,
               노선ID: bus.busRouteId,
               제공기관: bus.provider,
+              지역명: bus.providerName,
               제공기관코드: bus.providerCode,
               도시코드: bus.busCityCode,
-              운행지역: bus.busCityName,
             }))
           )
         )
