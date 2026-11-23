@@ -100,11 +100,24 @@ function filterSubwayArrivals(arrivals, lineNames) {
 }
 
 // 차량별 혼잡도
-function CongestionVehicle({ vehicle }) {
+function CongestionVehicle({ vehicle, fallbackBusNo }) {
 
   const label = vehicle.congestionLabel
     || vehicle.congestion
     || '정보없음'
+
+  // 차량에 저장된 버스 번호를 우선 사용
+  const busNo = vehicle.busNo ?? fallbackBusNo
+
+  // 서울은 다음 정류장, 경기는 현재 정류장 사용
+  // 현재 정류장 표시
+  const stationInfo = vehicle.currentStationName
+    ? `현재 정류장: ${vehicle.currentStationName}`
+    : vehicle.currentStationId
+      ? `현재 정류장 ID: ${vehicle.currentStationId}`
+      : vehicle.nextStopId
+        ? `다음 정류장 ID: ${vehicle.nextStopId}`
+        : '위치 정보 확인 중'
 
   return (
     <div
@@ -114,20 +127,36 @@ function CongestionVehicle({ vehicle }) {
         alignItems: 'center',
         padding: '10px 0',
         borderBottom: '1px solid #E5E7EB',
+        gap: '8px',
       }}
     >
-      <div>
+      <div style={{ minWidth: 0 }}>
+
         <div className="t-body-s-medium">
           {vehicle.vehicleNumber || '차량번호 미확인'}
         </div>
 
+        {busNo && (
+          <div className="t-caption c-brand">
+            {busNo}번 버스
+          </div>
+        )}
+
         <div className="t-caption c-secondary">
-          {vehicle.currentStationId
-            ? `현재 정류장 ID: ${vehicle.currentStationId}`
-            : vehicle.nextStopId
-              ? `다음 정류장 ID: ${vehicle.nextStopId}`
-              : '위치 정보 확인 중'}
+          {stationInfo}
         </div>
+
+        {vehicle.direction && (
+          <div className="t-caption c-secondary">
+            진행 방향: {vehicle.direction}
+          </div>
+        )}
+
+        {vehicle.lastBus && (
+          <div className="t-caption c-secondary">
+            {vehicle.lastBus === '막차' ? '막차 운행 중' : '일반 운행'}
+          </div>
+        )}
 
         {vehicle.vehicleState && (
           <div className="t-caption c-secondary">
@@ -140,6 +169,7 @@ function CongestionVehicle({ vehicle }) {
             잔여 좌석: {vehicle.remainSeatCount}석
           </div>
         )}
+
       </div>
 
       <span
@@ -149,6 +179,7 @@ function CongestionVehicle({ vehicle }) {
           borderRadius: '20px',
           fontSize: '12px',
           fontWeight: 700,
+          flexShrink: 0,
         }}
       >
         {label}
@@ -215,9 +246,16 @@ function BusCongestionSection({ congestion, detail }) {
             (item.busRouteIds ?? []).includes(route.busRouteId)
         )
 
+        // 현재 조회 중인 노선에 해당하는 정확한 버스 정보
+        const matchedLane = segment?.lanes?.find(
+          (lane) =>
+            String(lane.busRouteId) === String(route.busRouteId)
+        )
+
         const busName =
-          segment?.busNos?.join(', ')
-          || segment?.busNo
+          route.busNo
+          || matchedLane?.busNo
+          || segment?.busNos?.[0]
           || '버스'
 
         const vehicles = route.vehicles ?? []
@@ -338,6 +376,7 @@ function BusCongestionSection({ congestion, detail }) {
                     <CongestionVehicle
                       key={vehicle.vehicleId || index}
                       vehicle={vehicle}
+                      fallbackBusNo={route.busNo || busName}
                     />
                   ))}
                 </div>
