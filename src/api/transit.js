@@ -50,51 +50,75 @@ export function getBusApproach(approach) {
 }
 
 
-/**
- * 선택한 경로에 포함된 버스 노선들의 혼잡도 수집 및 DB 저장
- *
- * @param {string[]} busRouteIds 버스 노선 ID 목록
- */
-export function collectBusCongestion(busRouteIds) {
 
-  // 중복 제거 및 빈 값 제거
-  const uniqueRouteIds = [
-    ...new Set(
-      (busRouteIds ?? [])
-        .map((id) => String(id).trim())
-        .filter(Boolean)
-    ),
+/**
+ * 지역별 버스 혼잡도 수집 및 DB 저장
+ *
+ * @param {object[]} busTargets 지역별 버스 노선 정보
+ */
+export function collectBusCongestion(busTargets) {
+
+  // 문자열 배열로 들어오는 기존 호출도 호환
+  const normalizedTargets = (busTargets ?? [])
+    .map((target) => {
+
+      if (typeof target === 'string') {
+        return {
+          busRouteId: target.trim(),
+          busNo: null,
+          provider: 'SEOUL',
+          providerCode: 4,
+          busCityCode: 1000,
+        }
+      }
+
+      return {
+        busRouteId: String(target.busRouteId ?? '').trim(),
+        busNo: target.busNo ?? null,
+        provider: target.provider ?? 'UNKNOWN',
+        providerCode: target.providerCode ?? null,
+        busCityCode: target.busCityCode ?? null,
+      }
+    })
+    .filter((target) => target.busRouteId)
+
+  // 지역 + 도시 + 노선 ID 기준 중복 제거
+  const uniqueTargets = [
+    ...new Map(
+      normalizedTargets.map((target) => [
+        `${target.provider}:${target.busCityCode}:${target.busRouteId}`,
+        target,
+      ])
+    ).values(),
   ]
 
-  // 버스 노선이 없으면 API 호출하지 않음
-  if (uniqueRouteIds.length === 0) {
+  if (uniqueTargets.length === 0) {
     return Promise.resolve({
       status: 'SKIPPED',
       requestedCount: 0,
       successCount: 0,
       failedCount: 0,
+      results: [],
     })
   }
 
-  // 백엔드 Batch API 호출 (로그인 사용자만 가능)
   return request('/api/seoul/bus/positions/collect-batch', {
     method: 'POST',
-
     body: {
-      busRouteIds: uniqueRouteIds,
+      busTargets: uniqueTargets,
     },
   }).catch((err) => {
-    // 로그인하지 않은 사용자는 오류 대신 '로그인 필요' 상태로 돌려준다
+
     if (err instanceof ApiError && err.status === 401) {
       return {
         status: 'LOGIN_REQUIRED',
-        requestedCount: uniqueRouteIds.length,
+        requestedCount: uniqueTargets.length,
         successCount: 0,
         failedCount: 0,
         results: [],
       }
     }
+
     throw err
   })
 }
-

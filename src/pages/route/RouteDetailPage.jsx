@@ -122,10 +122,24 @@ function CongestionVehicle({ vehicle }) {
         </div>
 
         <div className="t-caption c-secondary">
-          {vehicle.nextStopId
-            ? `다음 정류장 ID: ${vehicle.nextStopId}`
-            : '위치 정보 확인 중'}
+          {vehicle.currentStationId
+            ? `현재 정류장 ID: ${vehicle.currentStationId}`
+            : vehicle.nextStopId
+              ? `다음 정류장 ID: ${vehicle.nextStopId}`
+              : '위치 정보 확인 중'}
         </div>
+
+        {vehicle.vehicleState && (
+          <div className="t-caption c-secondary">
+            운행 상태: {vehicle.vehicleState}
+          </div>
+        )}
+
+        {vehicle.remainSeatCount != null && (
+          <div className="t-caption c-secondary">
+            잔여 좌석: {vehicle.remainSeatCount}석
+          </div>
+        )}
       </div>
 
       <span

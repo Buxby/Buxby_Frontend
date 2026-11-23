@@ -154,14 +154,11 @@ export default function RouteSelectPage() {
     // 1. 버스 노선 ID 추출
     // =====================================
 
-    const busRouteIds = live
+    // 선택한 경로의 지역별 버스 정보
+    const busTargets = live
       ? [
-          ...new Set(
-            (selected.busRouteIds ?? [])
-              .filter(Boolean)
-              .map((id) => String(id).trim())
-          ),
-        ]
+          ...(selected.busTargets ?? []),
+        ].filter((target) => target.busRouteId)
       : []
 
     // =====================================
@@ -183,8 +180,8 @@ export default function RouteSelectPage() {
     // =====================================
 
     try {
-      if (busRouteIds.length > 0) {
-        const response = await collectBusCongestion(busRouteIds)
+      if (busTargets.length > 0) {
+        const response = await collectBusCongestion(busTargets)
 
         congestionState = {
           status: response.status,
@@ -196,6 +193,9 @@ export default function RouteSelectPage() {
 
           routes: (response.results ?? []).map((route) => ({
             busRouteId: route.busRouteId,
+            busNo: route.busNo,
+            provider: route.provider,
+            busCityCode: route.busCityCode,
             status: route.status,
             fetchedCount: route.fetchedCount ?? 0,
             savedCount: route.savedCount ?? 0,
